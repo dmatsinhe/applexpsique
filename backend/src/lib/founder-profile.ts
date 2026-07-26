@@ -20,5 +20,5 @@ export const FOUNDER_PROFILE = {
     "apoio ou os serviços de emergência.",
   // Contacto para marcação de consulta privada FORA da app — nunca
   // apresentado como canal de resposta a crise (ver crisis-resources.ts).
-  privateBookingContact: "[Contacto profissional da fundadora para marcação de consulta — a preencher]",
+  privateBookingContact: "www.daliamatsinhe.com",
 };
