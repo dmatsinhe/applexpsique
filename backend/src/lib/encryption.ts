@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { env, requireEncryptionKey } from "../config/env.js";
 
 // AES-256-GCM for sensitive fields at rest (check-in answers, rendered
@@ -8,15 +8,14 @@ import { env, requireEncryptionKey } from "../config/env.js";
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 
+// The AES-256-GCM key is derived via SHA-256 from ENCRYPTION_KEY_BASE64
+// rather than requiring it to literally decode to 32 bytes of base64. This
+// lets any high-entropy secret — including one a hosting platform
+// generates for you (e.g. Render's `generateValue: true`) — work directly
+// without needing to hand-craft a base64-encoded 32-byte value.
 function loadKey(): Buffer {
-  const keyBase64 = env.encryptionKeyBase64 || requireEncryptionKey();
-  const key = Buffer.from(keyBase64, "base64");
-  if (key.length !== 32) {
-    throw new Error(
-      "ENCRYPTION_KEY_BASE64 must decode to exactly 32 bytes for AES-256-GCM",
-    );
-  }
-  return key;
+  const secret = env.encryptionKeyBase64 || requireEncryptionKey();
+  return createHash("sha256").update(secret).digest();
 }
 
 export function encryptField(plaintext: string): string {

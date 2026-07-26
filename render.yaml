@@ -1,0 +1,58 @@
+# Blueprint de demonstração para o Render (https://render.com) — NÃO é
+# configuração de produção. Ver docs/architecture.md e README.md.
+#
+# Cria três serviços: base de dados Postgres (plano free, expira aos 90
+# dias), backend Node/Express (plano free, hiberna após inatividade), e o
+# frontend como site estático. Todos os segredos são gerados pelo Render
+# (`generateValue: true`) — nunca ficam escritos neste ficheiro nem no
+# repositório, que é público.
+#
+# Se o Render disser que "lexpsique-demo-backend" ou
+# "lexpsique-demo-frontend" já estão em uso por outra conta, muda o `name`
+# do serviço em causa e atualiza manualmente CORS_ORIGINS (no backend) e
+# VITE_API_BASE_URL (no frontend) no dashboard do Render depois do deploy.
+
+databases:
+  - name: lexpsique-demo-db
+    databaseName: lexpsique
+    user: lexpsique
+    plan: free
+
+services:
+  - type: web
+    name: lexpsique-demo-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lexpsique-demo-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY_BASE64
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://lexpsique-demo-frontend.onrender.com
+      - key: ANTHROPIC_API_KEY
+        value: ""
+
+  - type: web
+    name: lexpsique-demo-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://lexpsique-demo-backend.onrender.com

@@ -81,3 +81,34 @@ curl -X POST http://localhost:3000/admin/templates/<versionId>/approve \
 O conteúdo clínico em si (indução, sugestões centrais, frases-âncora) tem de
 ser escrito e aprovado por um profissional licenciado — este endpoint só
 regista essa aprovação, nunca gera o conteúdo.
+
+## Deploy de demonstração (Render)
+
+`render.yaml` na raiz do repositório é um Blueprint do [Render](https://render.com)
+que cria três serviços no plano gratuito: base de dados Postgres, backend, e
+o frontend como site estático. **Isto é só para veres a app a correr numa
+URL real — não é configuração de produção** (ver avisos em `docs/`).
+
+Passos (feitos por ti no teu browser — nenhum segredo passa por aqui):
+
+1. Entra em [dashboard.render.com](https://dashboard.render.com) e cria
+   conta (ou entra na que já tiveres), ligando o teu GitHub.
+2. **New** → **Blueprint**.
+3. Escolhe o repositório `dmatsinhe/applexpsique` e confirma o branch
+   `claude/new-session-43gdhg`.
+4. O Render lê o `render.yaml` e mostra os três serviços a criar. Confirma.
+5. Espera o deploy (uns minutos — o backend corre as migrações da base de
+   dados automaticamente no arranque).
+6. A URL do frontend fica em `https://lexpsique-demo-frontend.onrender.com`
+   (ou o nome que o Render tiver atribuído, se este já estiver ocupado —
+   nesse caso atualiza manualmente `CORS_ORIGINS` no backend e
+   `VITE_API_BASE_URL` no frontend nas definições do serviço).
+
+Avisos do plano gratuito: o backend "adormece" após inatividade (o primeiro
+pedido depois disso demora mais); a base de dados Postgres grátis expira ao
+fim de 90 dias.
+
+Depois do deploy, tal como localmente, nenhum template está aprovado — a
+app vai recusar todas as sessões até aprovares um manualmente pelo endpoint
+de admin (ver secção acima, trocando `localhost:3000` pela URL do backend
+no Render).
