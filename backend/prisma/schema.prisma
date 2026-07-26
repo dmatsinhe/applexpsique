@@ -25,13 +25,6 @@ model User {
   isAdultVerified Boolean   @default(false)
   ageVerifiedAt   DateTime?
 
-  // Consentimento de notificação de crise (secção 5): tem de começar por
-  // null — "por escolher" — nunca com um valor por defeito. A UI de
-  // onboarding é obrigada a forçar uma escolha ativa antes de gravar aqui.
-  crisisNotifyOnClearSignal Boolean?
-  crisisConsentAt           DateTime?
-  crisisConsentVersion      String? // texto de consentimento apresentado, para auditoria
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

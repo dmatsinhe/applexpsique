@@ -77,26 +77,29 @@ button.secondary {
   font-weight: 600;
 }
 
-.equal-weight-choice {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.choice-button {
-  background: white;
-  color: #1f2937;
-  border: 2px solid #1f2937;
-  padding: 1.25rem 1rem;
-  text-align: center;
-}
-
 .acknowledgement {
   background: #fef3c7;
   border-radius: 0.6rem;
   padding: 1rem;
   line-height: 1.5;
+}
+
+.supervision-notice {
+  background: #eef2f7;
+  border-left: 4px solid #1f2937;
+  border-radius: 0.4rem;
+  padding: 0.85rem 1rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.crisis-block {
+  margin-top: 1.5rem;
+}
+
+.crisis-block h2 {
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
 }
 
 .crisis-resources {
@@ -116,6 +119,19 @@ button.secondary {
 .availability {
   color: #6b7280;
   font-size: 0.85rem;
+}
+
+.founder-contact-block {
+  border: 2px solid #b45309;
+  border-radius: 0.6rem;
+  padding: 1rem;
+  background: #fffbeb;
+}
+
+.disclaimer-label {
+  font-weight: 700;
+  color: #92400e;
+  margin-top: 0;
 }
 
 .pace-tag {

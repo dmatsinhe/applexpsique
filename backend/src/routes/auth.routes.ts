@@ -2,8 +2,6 @@ import { Router } from "express";
 import { z } from "zod";
 import { AuthService } from "../modules/auth/auth.service.js";
 import { issueToken } from "../modules/auth/token.js";
-import { CRISIS_CONSENT_EXPLANATION } from "../modules/auth/consent.js";
-import { requireAuth } from "../middleware/requireAuth.js";
 import { asyncRoute } from "../middleware/errorHandler.js";
 
 const router = Router();
@@ -29,26 +27,6 @@ router.post(
       return;
     }
     res.json({ userId: result.userId, token: issueToken(result.userId) });
-  }),
-);
-
-router.get("/crisis-consent-explanation", (_req, res) => {
-  res.json(CRISIS_CONSENT_EXPLANATION);
-});
-
-const crisisConsentSchema = z.object({
-  // Sem default no schema — obrigatório o cliente enviar uma escolha ativa
-  // (secção 5: "nunca pré-selecionado por defeito").
-  notifyOnClearSignal: z.boolean(),
-});
-
-router.post(
-  "/consent/crisis-notify",
-  requireAuth,
-  asyncRoute(async (req, res) => {
-    const { notifyOnClearSignal } = crisisConsentSchema.parse(req.body);
-    await authService.setCrisisConsent(req.userId!, notifyOnClearSignal);
-    res.status(204).send();
   }),
 );
 

@@ -16,9 +16,34 @@ export interface CrisisResource {
   availability: string;
 }
 
+export interface RegionalProfessionalSupportOption {
+  name: string;
+  description: string;
+  contact?: string;
+}
+
+export interface FounderPrivateContact {
+  disclaimerLabel: string;
+  name: string;
+  credentials: string;
+  bookingContact: string;
+}
+
+export interface CrisisResponseBundle {
+  immediateResources: CrisisResource[];
+  regionalProfessionalSupport: RegionalProfessionalSupportOption[];
+  founderPrivateContact: FounderPrivateContact;
+}
+
 export type CheckInOutcome =
-  | { kind: "crisis_clear"; resources: CrisisResource[] }
-  | { kind: "crisis_ambiguous"; checkInId: string; resources: CrisisResource[]; acknowledgement: string }
+  | { kind: "crisis_clear"; response: CrisisResponseBundle; noRealTimeSupervisionNotice: string }
+  | {
+      kind: "crisis_ambiguous";
+      checkInId: string;
+      response: CrisisResponseBundle;
+      noRealTimeSupervisionNotice: string;
+      acknowledgement: string;
+    }
   | { kind: "no_template_available"; checkInId: string; availableGoals: ClinicalGoal[] }
   | {
       kind: "matched";
@@ -64,20 +89,6 @@ export const api = {
     request<{ userId: string; token: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify(params),
-    }),
-
-  getCrisisConsentExplanation: () =>
-    request<{
-      version: string;
-      title: string;
-      body: string;
-      options: { value: boolean; label: string }[];
-    }>("/auth/crisis-consent-explanation"),
-
-  setCrisisConsent: (notifyOnClearSignal: boolean) =>
-    request<void>("/auth/consent/crisis-notify", {
-      method: "POST",
-      body: JSON.stringify({ notifyOnClearSignal }),
     }),
 
   submitCheckIn: (params: {

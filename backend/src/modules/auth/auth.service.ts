@@ -1,12 +1,7 @@
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { calculateAge, isAdult, MINIMUM_AGE } from "./age.js";
-import {
-  createAdultUser,
-  findUserByEmail,
-  setCrisisConsent as setCrisisConsentInRepository,
-} from "./auth.repository.js";
-import { CRISIS_CONSENT_VERSION } from "./consent.js";
+import { createAdultUser, findUserByEmail } from "./auth.repository.js";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -62,19 +57,6 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return null;
     return { userId: user.id };
-  }
-
-  /**
-   * Consentimento de notificação de crise (secção 5). `notifyOnClearSignal`
-   * é obrigatoriamente um boolean explícito no tipo — não há overload nem
-   * valor por defeito possível de chamar sem o fornecer.
-   */
-  async setCrisisConsent(userId: string, notifyOnClearSignal: boolean): Promise<void> {
-    await setCrisisConsentInRepository({
-      userId,
-      notifyOnClearSignal,
-      consentVersion: CRISIS_CONSENT_VERSION,
-    });
   }
 }
 

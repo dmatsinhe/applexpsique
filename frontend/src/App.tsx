@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { setAuthToken, type CheckInOutcome } from "./api/client.js";
 import { AgeGate } from "./pages/AgeGate.js";
-import { CrisisConsent } from "./pages/CrisisConsent.js";
 import { CheckIn } from "./pages/CheckIn.js";
 import { CrisisResources } from "./pages/CrisisResources.js";
 import { NoTemplateAvailable } from "./pages/NoTemplateAvailable.js";
@@ -10,7 +9,6 @@ import { SessionResult } from "./pages/SessionResult.js";
 
 type Step =
   | { name: "age-gate" }
-  | { name: "crisis-consent" }
   | { name: "checkin" }
   | { name: "crisis-clear"; outcome: Extract<CheckInOutcome, { kind: "crisis_clear" }> }
   | { name: "crisis-ambiguous"; outcome: Extract<CheckInOutcome, { kind: "crisis_ambiguous" }> }
@@ -58,24 +56,25 @@ export function App() {
         <AgeGate
           onRegistered={(token) => {
             setAuthToken(token);
-            setStep({ name: "crisis-consent" });
+            setStep({ name: "checkin" });
           }}
         />
-      )}
-
-      {step.name === "crisis-consent" && (
-        <CrisisConsent onDecided={() => setStep({ name: "checkin" })} />
       )}
 
       {step.name === "checkin" && <CheckIn onOutcome={handleOutcome} />}
 
       {step.name === "crisis-clear" && (
-        <CrisisResources resources={step.outcome.resources} onRestart={restart} />
+        <CrisisResources
+          response={step.outcome.response}
+          noRealTimeSupervisionNotice={step.outcome.noRealTimeSupervisionNotice}
+          onRestart={restart}
+        />
       )}
 
       {step.name === "crisis-ambiguous" && (
         <CrisisResources
-          resources={step.outcome.resources}
+          response={step.outcome.response}
+          noRealTimeSupervisionNotice={step.outcome.noRealTimeSupervisionNotice}
           acknowledgement={step.outcome.acknowledgement}
           checkInId={step.outcome.checkInId}
           onContinue={(outcome) => handleOutcome(outcome as CheckInOutcome)}

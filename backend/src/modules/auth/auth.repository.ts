@@ -26,26 +26,6 @@ export async function findUserById(id: string) {
 }
 
 /**
- * Consentimento de notificação de crise (secção 5) — só grava um valor
- * quando o chamador fornece um booleano explícito; nunca é invocado com um
- * valor por defeito (ver AuthService.setCrisisConsent).
- */
-export async function setCrisisConsent(params: {
-  userId: string;
-  notifyOnClearSignal: boolean;
-  consentVersion: string;
-}): Promise<void> {
-  await prisma.user.update({
-    where: { id: params.userId },
-    data: {
-      crisisNotifyOnClearSignal: params.notifyOnClearSignal,
-      crisisConsentAt: new Date(),
-      crisisConsentVersion: params.consentVersion,
-    },
-  });
-}
-
-/**
  * Hook para o caso "5.1: se a app suspeitar, por outros sinais, que um
  * utilizador é menor" — bloqueia acesso a conteúdo clínico revertendo a
  * verificação de idade. A deteção desses "outros sinais" é um processo

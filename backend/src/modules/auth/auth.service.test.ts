@@ -75,39 +75,3 @@ describe("AuthService.register — verificação de idade explícita (secção 5
     ).rejects.toThrow();
   });
 });
-
-describe("AuthService.setCrisisConsent — sem valor por defeito (secção 5)", () => {
-  let userId: string;
-
-  afterAll(async () => {
-    if (userId) await prisma.user.delete({ where: { id: userId } });
-  });
-
-  it("o consentimento começa null até o utilizador escolher ativamente", async () => {
-    const email = futureUniqueEmail("consentimento");
-    const registered = await authService.register({
-      email,
-      password: "password123",
-      birthDate: yearsAgo(25),
-    });
-    userId = registered.userId;
-
-    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    expect(user.crisisNotifyOnClearSignal).toBeNull();
-    expect(user.crisisConsentAt).toBeNull();
-  });
-
-  it("grava explicitamente false quando o utilizador escolhe não notificar", async () => {
-    await authService.setCrisisConsent(userId, false);
-    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    expect(user.crisisNotifyOnClearSignal).toBe(false);
-    expect(user.crisisConsentAt).not.toBeNull();
-    expect(user.crisisConsentVersion).toBeTruthy();
-  });
-
-  it("grava explicitamente true quando o utilizador escolhe notificar", async () => {
-    await authService.setCrisisConsent(userId, true);
-    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    expect(user.crisisNotifyOnClearSignal).toBe(true);
-  });
-});

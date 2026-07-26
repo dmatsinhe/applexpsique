@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { api, type CrisisResource } from "../api/client.js";
+import { api, type CrisisResponseBundle } from "../api/client.js";
 
 interface Props {
-  resources: CrisisResource[];
+  response: CrisisResponseBundle;
+  noRealTimeSupervisionNotice: string;
   /** Presente só em sinal AMBÍGUO — nunca em sinal CLARO. */
   acknowledgement?: string;
   /** Presente só em sinal AMBÍGUO — permite continuar após reconhecimento explícito. */
@@ -12,11 +13,25 @@ interface Props {
 }
 
 /**
- * Secção 5: em nenhum nível a IA tenta "resolver" ou "acalmar" a situação —
- * este ecrã só mostra recursos e, quando aplicável, reconhece o sinal.
- * Nunca aconselha, nunca minimiza.
+ * Secção 5 (revista): em nenhum nível a IA tenta "resolver" ou "acalmar" a
+ * situação — este ecrã só mostra três blocos SEPARADOS e claramente
+ * identificados, nunca fundidos numa única frase:
+ *   1. Recursos de crise imediatos (Linha 1411, 112).
+ *   2. Apoio profissional na área do utilizador (encaminhamento).
+ *   3. Contacto privado da fundadora — explicitamente NÃO um canal de
+ *      resposta a crise.
+ * A app nunca promete supervisão humana em tempo real — isso é comunicado
+ * de forma explícita e visível (`noRealTimeSupervisionNotice`), nunca
+ * escondido atrás de um ecrã genérico.
  */
-export function CrisisResources({ resources, acknowledgement, checkInId, onContinue, onRestart }: Props) {
+export function CrisisResources({
+  response,
+  noRealTimeSupervisionNotice,
+  acknowledgement,
+  checkInId,
+  onContinue,
+  onRestart,
+}: Props) {
   const [continuing, setContinuing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,17 +51,46 @@ export function CrisisResources({ resources, acknowledgement, checkInId, onConti
   return (
     <div className="screen">
       {acknowledgement && <p className="acknowledgement">{acknowledgement}</p>}
-      <h2>Recursos de apoio</h2>
-      <ul className="crisis-resources">
-        {resources.map((resource) => (
-          <li key={resource.name}>
-            <strong>{resource.name}</strong>
-            {resource.phone && <span> — {resource.phone}</span>}
-            <p>{resource.description}</p>
-            <p className="availability">{resource.availability}</p>
-          </li>
-        ))}
-      </ul>
+
+      <p className="supervision-notice">{noRealTimeSupervisionNotice}</p>
+
+      <section className="crisis-block">
+        <h2>Recursos de crise imediatos</h2>
+        <ul className="crisis-resources">
+          {response.immediateResources.map((resource) => (
+            <li key={resource.name}>
+              <strong>{resource.name}</strong>
+              {resource.phone && <span> — {resource.phone}</span>}
+              <p>{resource.description}</p>
+              <p className="availability">{resource.availability}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="crisis-block">
+        <h2>Apoio profissional na sua área</h2>
+        <ul className="crisis-resources">
+          {response.regionalProfessionalSupport.map((option) => (
+            <li key={option.name}>
+              <strong>{option.name}</strong>
+              {option.contact && <span> — {option.contact}</span>}
+              <p>{option.description}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="crisis-block founder-contact-block">
+        <h2>Contacto da fundadora</h2>
+        <p className="disclaimer-label">{response.founderPrivateContact.disclaimerLabel}</p>
+        <p>
+          <strong>{response.founderPrivateContact.name}</strong>
+          <br />
+          {response.founderPrivateContact.credentials}
+        </p>
+        <p>{response.founderPrivateContact.bookingContact}</p>
+      </section>
 
       {checkInId && onContinue && (
         <>

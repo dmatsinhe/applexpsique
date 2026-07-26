@@ -8,10 +8,16 @@ classificador de crise.
 ## Estado atual
 
 MVP passo 1 implementado e testado: registo com verificação de idade
-explícita → consentimento de notificação de crise (sem valor por defeito) →
-check-in com deteção de crise obrigatória → correspondência a template
+explícita → check-in com deteção de crise obrigatória (estrutura inspirada
+no C-SSRS, ver `docs/crisis-detection.md`) → correspondência a template
 aprovado (ou recusa explícita) → personalização dentro dos limites do
 template → sessão renderizada, com retoma de posição de áudio.
+
+Em caso de sinal de crise, a app nunca promete supervisão humana em tempo
+real — mostra sempre três blocos separados (recursos imediatos, apoio
+profissional regional, contacto privado da fundadora explicitamente rotulado
+como não-resposta-a-crise) e um aviso explícito de que ninguém é notificado
+automaticamente. Ver `docs/interno/classificação-sinais-crise.md`.
 
 **Antes de qualquer lançamento real**, ver `docs/crisis-detection.md`: o
 classificador de crise atual é um ponto de partida de engenharia, não uma

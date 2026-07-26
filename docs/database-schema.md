@@ -11,15 +11,13 @@ produto.
   reter a data de nascimento completa indefinidamente. O fluxo de registo
   pede a data de nascimento, valida 18+, e só persiste o resultado booleano
   + timestamp — minimização de dados sensíveis (secção 8).
-- `crisisNotifyOnClearSignal` é `Boolean?` (nullable), **nunca** com
-  `@default(false)` ou `@default(true)`. Isto é deliberado: a secção 5 exige
-  que o utilizador tenha de escolher ativamente, sem pré-seleção. Um valor
-  por defeito no schema violaria esse requisito ao nível dos dados, mesmo
-  que a UI parecesse pedir escolha. Enquanto for `null`, o backend trata como
-  "ainda não decidido" e não notifica ninguém.
-- `crisisConsentVersion` guarda que texto de consentimento foi mostrado
-  quando o utilizador escolheu — para que alterações futuras ao texto não
-  apaguem retroativamente o que a pessoa realmente viu e aceitou.
+- **Não existe nenhum campo de consentimento de notificação de crise.** Uma
+  versão anterior deste schema tinha `crisisNotifyOnClearSignal` (nullable,
+  sem valor por defeito) para o utilizador escolher se a fundadora seria
+  notificada em tempo real em caso de sinal claro. A secção 5 (versão
+  revista) removeu essa promessa por completo — a app nunca notifica
+  ninguém automaticamente, por isso não há nada para consentir aqui. Ver
+  `docs/crisis-detection.md` para a decisão completa.
 
 ## `session_templates` + `template_versions`
 

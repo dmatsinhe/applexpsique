@@ -27,7 +27,11 @@ export class CheckInService {
       // Não se persiste sequer um CheckIn associável a seleção de template —
       // a sessão automatizada para imediatamente, sem oferecer continuar.
       await createCheckIn({ submission, crisisSignalLevel: "CLEAR" });
-      return { kind: "crisis_clear", resources: crisisOutcome.resources! };
+      return {
+        kind: "crisis_clear",
+        response: crisisOutcome.response!,
+        noRealTimeSupervisionNotice: crisisOutcome.noRealTimeSupervisionNotice!,
+      };
     }
 
     if (crisisOutcome.result.level === "AMBIGUOUS") {
@@ -35,7 +39,8 @@ export class CheckInService {
       return {
         kind: "crisis_ambiguous",
         checkInId: id,
-        resources: crisisOutcome.resources!,
+        response: crisisOutcome.response!,
+        noRealTimeSupervisionNotice: crisisOutcome.noRealTimeSupervisionNotice!,
         acknowledgement: crisisOutcome.acknowledgement!,
       };
     }

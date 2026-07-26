@@ -1,3 +1,5 @@
+import type { CrisisDimension } from "./crisis-lexicon.js";
+
 export const CRISIS_LEVELS = ["CLEAR", "AMBIGUOUS", "ABSENT"] as const;
 export type CrisisLevel = (typeof CRISIS_LEVELS)[number];
 
@@ -5,6 +7,8 @@ export interface ClassificationResult {
   level: CrisisLevel;
   /** Which lexicon entry matched, kept in-process only — never persisted verbatim. */
   matchedPattern?: string;
+  /** Dimensão C-SSRS-inspirada que motivou o nível — ver crisis-lexicon.ts. */
+  dimension?: CrisisDimension;
   classifierVersion: string;
 }
 

@@ -62,19 +62,12 @@ describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () 
     expect(res.status).toBe(400);
   });
 
-  it("percorre o fluxo completo: registo → consentimento → check-in → sessão personalizada", async () => {
+  it("percorre o fluxo completo: registo → check-in → sessão personalizada", async () => {
     const registerRes = await request(app)
       .post("/auth/register")
       .send({ email, password: "password123", birthDate: "1990-05-15" });
     expect(registerRes.status).toBe(201);
     const token = registerRes.body.token as string;
-
-    // Consentimento de crise: sem default, o cliente tem de escolher.
-    const consentRes = await request(app)
-      .post("/auth/consent/crisis-notify")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ notifyOnClearSignal: false });
-    expect(consentRes.status).toBe(204);
 
     // Sem template aprovado ainda para GENERALIZED_ANXIETY -> recusa explícita.
     const beforeApprovalRes = await request(app)
@@ -144,7 +137,7 @@ describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () 
     expect(getRes.body.resumePositionSeconds).toBe(42);
   });
 
-  it("sinal claro de crise no check-in bloqueia a sessão automatizada e devolve recursos PT", async () => {
+  it("sinal claro de crise no check-in bloqueia a sessão automatizada e devolve os 3 blocos de recursos", async () => {
     const loginRes = await request(app).post("/auth/login").send({ email, password: "password123" });
     const token = loginRes.body.token as string;
 
@@ -159,7 +152,12 @@ describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () 
 
     expect(res.status).toBe(201);
     expect(res.body.kind).toBe("crisis_clear");
-    expect(res.body.resources.some((r: { name: string }) => r.name === "SNS 24")).toBe(true);
+    expect(
+      res.body.response.immediateResources.some((r: { name: string }) => r.name.includes("1411")),
+    ).toBe(true);
+    expect(res.body.response.regionalProfessionalSupport.length).toBeGreaterThan(0);
+    expect(res.body.response.founderPrivateContact.disclaimerLabel).toContain("NÃO");
+    expect(res.body.noRealTimeSupervisionNotice).toBeTruthy();
   });
 
   it("rejeita rotas clínicas sem token de autenticação", async () => {

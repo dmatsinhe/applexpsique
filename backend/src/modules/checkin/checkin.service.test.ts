@@ -78,13 +78,16 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     await prisma.$disconnect();
   });
 
-  it("sinal CLARO para a sessão imediatamente, nunca oferece continuar", async () => {
+  it("sinal CLARO para a sessão imediatamente, mostra os 3 blocos e nunca oferece continuar", async () => {
     const outcome = await checkInService.submit(
       baseSubmission({ recentFeelingText: "Só quero acabar com tudo, não aguento mais viver." }),
     );
     expect(outcome.kind).toBe("crisis_clear");
     if (outcome.kind === "crisis_clear") {
-      expect(outcome.resources.length).toBeGreaterThan(0);
+      expect(outcome.response.immediateResources.length).toBeGreaterThan(0);
+      expect(outcome.response.regionalProfessionalSupport.length).toBeGreaterThan(0);
+      expect(outcome.response.founderPrivateContact.disclaimerLabel).toContain("NÃO");
+      expect(outcome.noRealTimeSupervisionNotice.length).toBeGreaterThan(0);
     }
   });
 
@@ -96,7 +99,8 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     );
     expect(outcome.kind).toBe("crisis_ambiguous");
     if (outcome.kind !== "crisis_ambiguous") throw new Error("unreachable");
-    expect(outcome.resources.length).toBeGreaterThan(0);
+    expect(outcome.response.immediateResources.length).toBeGreaterThan(0);
+    expect(outcome.noRealTimeSupervisionNotice.length).toBeGreaterThan(0);
     expect(outcome.acknowledgement.length).toBeGreaterThan(0);
 
     const continued = await checkInService.continueAfterAmbiguousAcknowledgement(outcome.checkInId);

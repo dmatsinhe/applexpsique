@@ -55,10 +55,11 @@ como personalizáveis num template).
     /pages
       Onboarding/
         AgeGate.tsx           — confirmação explícita de idade (não checkbox genérica)
-        CrisisConsent.tsx     — escolha explícita, sem pré-seleção, pesos visuais iguais
       CheckIn/
       SessionResult/
-      CrisisResources/        — mostrado sem fricção em sinal "claro" ou "ambíguo"
+      CrisisResources/        — três blocos separados: recursos imediatos,
+                                 apoio profissional regional, contacto
+                                 privado da fundadora (nunca fundidos)
       FounderProfile/         — credenciais, licença, "Como isto funciona"
     /components
     /api                      — cliente HTTP tipado para o backend
@@ -79,11 +80,15 @@ como personalizáveis num template).
    (`isAdult: true`, `ageVerifiedAt`) para minimizar dados sensíveis.
 2. `POST /checkin` — recebe 3–5 respostas. **Antes de qualquer outra lógica**,
    cada resposta de texto livre passa pelo `CrisisClassifier`.
-   - Nível `CLEAR` → devolve imediatamente recursos de crise, sem oferecer
-     sessão. Regista `CrisisEvent` anonimizado.
-   - Nível `AMBIGUOUS` → devolve recursos de crise + reconhecimento explícito
-     do sinal, e só então oferece a opção de continuar (nunca decide sozinho
-     que está tudo bem).
+   - Nível `CLEAR` → devolve imediatamente os três blocos de recursos de
+     crise (ver docs/crisis-detection.md), sem oferecer sessão. Regista
+     `CrisisEvent` anonimizado.
+   - Nível `AMBIGUOUS` → devolve os três blocos de recursos + reconhecimento
+     explícito do sinal, e só então oferece a opção de continuar (nunca
+     decide sozinho que está tudo bem).
+   - Em ambos os níveis acima, a resposta inclui sempre um aviso explícito
+     de que a app não tem supervisão humana em tempo real — nunca promete
+     uma notificação que não consegue garantir.
    - Nível `ABSENT` → segue para seleção de template.
 3. `TemplateSelector` mapeia o objetivo do check-in para um `TemplateVersion`
    com `status = APPROVED`. Se não existir nenhum aprovado para o objetivo
