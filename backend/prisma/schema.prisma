@@ -1,0 +1,247 @@
+// Lexpsique — schema da base de dados
+// Ver /docs/database-schema.md para a justificação de cada decisão.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Utilizadores
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  passwordHash String
+  locale       String  @default("pt-PT")
+
+  // Verificação de idade (secção 5.1): a data de nascimento em si nunca é
+  // persistida — só o resultado derivado, para minimizar dados sensíveis.
+  isAdultVerified Boolean   @default(false)
+  ageVerifiedAt   DateTime?
+
+  // Consentimento de notificação de crise (secção 5): tem de começar por
+  // null — "por escolher" — nunca com um valor por defeito. A UI de
+  // onboarding é obrigada a forçar uma escolha ativa antes de gravar aqui.
+  crisisNotifyOnClearSignal Boolean?
+  crisisConsentAt           DateTime?
+  crisisConsentVersion      String? // texto de consentimento apresentado, para auditoria
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  checkIns         CheckIn[]
+  therapySessions  TherapySession[]
+  voicePreference  VoicePreference?
+  crisisEvents     CrisisEvent[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Templates de sessão (secção 1) — repositório versionado e aprovado
+// ---------------------------------------------------------------------------
+
+enum ClinicalGoal {
+  SLEEP
+  GENERALIZED_ANXIETY
+  FOCUS
+  SELF_ESTEEM
+  HABIT
+  PAIN
+  GRIEF
+
+  @@map("clinical_goal")
+}
+
+enum TemplateStatus {
+  DRAFT
+  APPROVED
+  RETIRED
+
+  @@map("template_status")
+}
+
+// Um SessionTemplate agrupa versões ao longo do tempo para o mesmo objetivo
+// clínico. O que é efetivamente servido a utilizadores é sempre uma
+// TemplateVersion específica, nunca o "template" em abstrato.
+model SessionTemplate {
+  id           String       @id @default(uuid())
+  slug         String       @unique // ex: "sono-basico", "ansiedade-generalizada-v1"
+  clinicalGoal ClinicalGoal
+  title        String
+
+  createdAt DateTime @default(now())
+
+  versions TemplateVersion[]
+
+  @@map("session_templates")
+}
+
+model TemplateVersion {
+  id         String          @id @default(uuid())
+  templateId String
+  template   SessionTemplate @relation(fields: [templateId], references: [id])
+
+  version Int
+  status  TemplateStatus @default(DRAFT)
+
+  // Conteúdo estruturado — nunca texto livre. Cada secção é nomeada para que
+  // a personalização só possa tocar em placeholders explícitos, nunca
+  // reescrever indução/estrutura/sugestões centrais.
+  // Forma esperada (validada em código, não só no schema):
+  // {
+  //   induction: string,               // fixo, não personalizável
+  //   coreSuggestions: string[],       // fixo, não personalizável
+  //   anchorPhrases: string[],         // fixo, não personalizável
+  //   closing: string,                 // fixo, não personalizável
+  //   personalizableFields: {          // únicos pontos que a IA pode preencher
+  //     nameSlot: boolean,
+  //     situationSlot: boolean,
+  //     paceDirectiveSlot: boolean
+  //   }
+  // }
+  content Json
+
+  // Nenhum template entra em produção sem isto preenchido.
+  approvedBy String?
+  approvedAt DateTime?
+
+  // Só pode existir uma versão ativa (servível) por template ao mesmo tempo,
+  // e tem de estar APPROVED. Aplicado em código no TemplateRepository.
+  isActive Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  checkIns        CheckIn[]
+  therapySessions TherapySession[]
+
+  @@unique([templateId, version])
+  @@map("template_versions")
+}
+
+// ---------------------------------------------------------------------------
+// Check-in (secção 1 + secção 5) — determina qual template, nunca que
+// conteúdo clínico é gerado. Corre o classificador de crise sobre cada
+// resposta antes de qualquer outra lógica.
+// ---------------------------------------------------------------------------
+
+enum CrisisLevel {
+  CLEAR
+  AMBIGUOUS
+  ABSENT
+
+  @@map("crisis_level")
+}
+
+model CheckIn {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Respostas às 3–5 perguntas. Texto livre potencialmente sensível é
+  // encriptado a nível de aplicação (ver lib/encryption.ts) antes de gravar.
+  answersEncrypted String
+
+  requestedGoal ClinicalGoal?
+
+  crisisSignalLevel CrisisLevel
+
+  // Preenchido só quando crisisSignalLevel = ABSENT e existe um template
+  // APPROVED para o objetivo pedido.
+  matchedTemplateVersionId String?
+  matchedTemplateVersion   TemplateVersion? @relation(fields: [matchedTemplateVersionId], references: [id])
+
+  // Quando não há template aprovado disponível para o objetivo — recusa
+  // explícita, nunca geração livre.
+  refusedNoTemplateAvailable Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("check_ins")
+}
+
+// Registo de auditoria de segurança do classificador de crise — anonimizado,
+// usado apenas para revisão periódica de falsos positivos/negativos, nunca
+// para outro fim (secção 5).
+model CrisisEvent {
+  id     String  @id @default(uuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  source            String // "checkin" | "free_message"
+  signalLevel       CrisisLevel
+  classifierVersion String
+
+  // Nunca o texto em claro — só um hash, suficiente para deduplicação e
+  // auditoria sem reter o conteúdo sensível.
+  inputHash String
+
+  reviewed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("crisis_events")
+}
+
+// ---------------------------------------------------------------------------
+// Sessões de hipnose personalizadas (secção 1, 3, 9)
+// ---------------------------------------------------------------------------
+
+enum TherapySessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+
+  @@map("therapy_session_status")
+}
+
+model TherapySession {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  templateVersionId String
+  templateVersion   TemplateVersion @relation(fields: [templateVersionId], references: [id])
+
+  // Só os valores usados para preencher os placeholders personalizáveis —
+  // nunca estrutura terapêutica.
+  personalization Json // { name?: string, situationNote?: string, paceDirective?: string }
+
+  // Conteúdo final entregue ao utilizador (template + personalização),
+  // encriptado em repouso.
+  renderedContentEncrypted String
+
+  status TherapySessionStatus @default(IN_PROGRESS)
+
+  // Robustez técnica (secção 9): permite retomar em vez de reiniciar do zero
+  // após perda de ligação a meio de uma sessão de áudio.
+  resumePositionSeconds Int @default(0)
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@map("therapy_sessions")
+}
+
+// ---------------------------------------------------------------------------
+// Preferências de voz (secção 2) — fora do MVP passo 1, schema já preparado
+// ---------------------------------------------------------------------------
+
+model VoicePreference {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id])
+
+  voiceId    String @default("voice-1")
+  speed      Float  @default(1.0)
+  pauseScale Float  @default(1.0)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("voice_preferences")
+}

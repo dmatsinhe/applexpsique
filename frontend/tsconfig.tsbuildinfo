@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/client.ts","./src/pages/AgeGate.tsx","./src/pages/CheckIn.tsx","./src/pages/CrisisConsent.tsx","./src/pages/CrisisResources.tsx","./src/pages/NoTemplateAvailable.tsx","./src/pages/Personalize.tsx","./src/pages/SessionResult.tsx"],"version":"5.9.3"}

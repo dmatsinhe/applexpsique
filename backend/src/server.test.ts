@@ -1,0 +1,169 @@
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import request from "supertest";
+import { createApp } from "./server.js";
+import { prisma } from "./lib/prisma.js";
+import { TemplateService } from "./modules/templates/template.service.js";
+import { env } from "./config/env.js";
+import type { TemplateContent } from "./modules/templates/template.types.js";
+
+const app = createApp();
+const templateService = new TemplateService();
+
+const slug = "teste-e2e-ansiedade";
+
+function testContent(): TemplateContent {
+  return {
+    induction: "Indução fixa E2E.",
+    coreSuggestions: ["Sugestão E2E 1"],
+    anchorPhrases: ["Âncora E2E"],
+    closing: "Encerramento fixo E2E.",
+    personalizableOpening: "Olá {{nome}}, hoje vamos abordar {{situacao}}.",
+    paceOptions: ["lento", "moderado"],
+  };
+}
+
+async function cleanup(email?: string) {
+  const template = await prisma.sessionTemplate.findUnique({ where: { slug } });
+  if (template) {
+    const versions = await prisma.templateVersion.findMany({ where: { templateId: template.id } });
+    await prisma.therapySession.deleteMany({ where: { templateVersionId: { in: versions.map((v) => v.id) } } });
+    await prisma.checkIn.updateMany({
+      where: { matchedTemplateVersionId: { in: versions.map((v) => v.id) } },
+      data: { matchedTemplateVersionId: null },
+    });
+    await prisma.templateVersion.deleteMany({ where: { templateId: template.id } });
+    await prisma.sessionTemplate.delete({ where: { id: template.id } });
+  }
+  if (email) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      await prisma.checkIn.deleteMany({ where: { userId: user.id } });
+      await prisma.user.delete({ where: { id: user.id } });
+    }
+  }
+}
+
+describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () => {
+  const email = `e2e-${Date.now()}@lexpsique.pt`;
+
+  beforeAll(async () => {
+    await cleanup(email);
+  });
+
+  afterAll(async () => {
+    await cleanup(email);
+    await prisma.$disconnect();
+  });
+
+  it("recusa registo de menor de idade via API", async () => {
+    const res = await request(app)
+      .post("/auth/register")
+      .send({ email: `menor-${Date.now()}@lexpsique.pt`, password: "password123", birthDate: "2015-01-01" });
+    expect(res.status).toBe(400);
+  });
+
+  it("percorre o fluxo completo: registo → consentimento → check-in → sessão personalizada", async () => {
+    const registerRes = await request(app)
+      .post("/auth/register")
+      .send({ email, password: "password123", birthDate: "1990-05-15" });
+    expect(registerRes.status).toBe(201);
+    const token = registerRes.body.token as string;
+
+    // Consentimento de crise: sem default, o cliente tem de escolher.
+    const consentRes = await request(app)
+      .post("/auth/consent/crisis-notify")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ notifyOnClearSignal: false });
+    expect(consentRes.status).toBe(204);
+
+    // Sem template aprovado ainda para GENERALIZED_ANXIETY -> recusa explícita.
+    const beforeApprovalRes = await request(app)
+      .post("/checkin")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        requestedGoal: "GENERALIZED_ANXIETY",
+        recentFeelingText: "Tenho estado ansioso com o trabalho.",
+        energyLevel: 3,
+      });
+    expect(beforeApprovalRes.status).toBe(201);
+    expect(beforeApprovalRes.body.kind).toBe("no_template_available");
+
+    // Aprova um template via endpoint admin protegido por chave partilhada.
+    const draftRes = await request(app)
+      .post("/admin/templates/draft")
+      .set("x-admin-key", env.adminApiKey)
+      .send({ slug, clinicalGoal: "GENERALIZED_ANXIETY", title: "Ansiedade (E2E)", content: testContent() });
+    expect(draftRes.status).toBe(201);
+
+    const unauthorizedApprove = await request(app)
+      .post(`/admin/templates/${draftRes.body.versionId}/approve`)
+      .send({ approvedBy: "attacker" });
+    expect(unauthorizedApprove.status).toBe(403);
+
+    const approveRes = await request(app)
+      .post(`/admin/templates/${draftRes.body.versionId}/approve`)
+      .set("x-admin-key", env.adminApiKey)
+      .send({ approvedBy: "fundadora-e2e@lexpsique.pt" });
+    expect(approveRes.status).toBe(204);
+
+    // Agora o check-in encontra o template.
+    const checkinRes = await request(app)
+      .post("/checkin")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        requestedGoal: "GENERALIZED_ANXIETY",
+        recentFeelingText: "Tenho estado ansioso com o trabalho.",
+        situationNote: "uma entrevista de emprego",
+        energyLevel: 3,
+      });
+    expect(checkinRes.status).toBe(201);
+    expect(checkinRes.body.kind).toBe("matched");
+
+    // Cria a sessão personalizada a partir do template correspondido.
+    const sessionRes = await request(app)
+      .post("/sessions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        templateVersionId: checkinRes.body.templateVersionId,
+        personalization: { name: "Joana", situationNote: "a entrevista de amanhã", pace: "lento" },
+      });
+    expect(sessionRes.status).toBe(201);
+    expect(sessionRes.body.rendered.opening).toBe("Olá Joana, hoje vamos abordar a entrevista de amanhã.");
+
+    // Retoma: guarda posição e recupera.
+    const resumeRes = await request(app)
+      .patch(`/sessions/${sessionRes.body.sessionId}/resume-position`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ positionSeconds: 42 });
+    expect(resumeRes.status).toBe(204);
+
+    const getRes = await request(app)
+      .get(`/sessions/${sessionRes.body.sessionId}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.resumePositionSeconds).toBe(42);
+  });
+
+  it("sinal claro de crise no check-in bloqueia a sessão automatizada e devolve recursos PT", async () => {
+    const loginRes = await request(app).post("/auth/login").send({ email, password: "password123" });
+    const token = loginRes.body.token as string;
+
+    const res = await request(app)
+      .post("/checkin")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        requestedGoal: "GENERALIZED_ANXIETY",
+        recentFeelingText: "Não aguento mais viver, quero morrer.",
+        energyLevel: 1,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.kind).toBe("crisis_clear");
+    expect(res.body.resources.some((r: { name: string }) => r.name === "SNS 24")).toBe(true);
+  });
+
+  it("rejeita rotas clínicas sem token de autenticação", async () => {
+    const res = await request(app).post("/checkin").send({});
+    expect(res.status).toBe(401);
+  });
+});
