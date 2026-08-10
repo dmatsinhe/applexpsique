@@ -14,6 +14,10 @@ type Step =
   | { name: "checkin" }
   | { name: "crisis-clear"; outcome: Extract<CheckInOutcome, { kind: "crisis_clear" }> }
   | { name: "crisis-ambiguous"; outcome: Extract<CheckInOutcome, { kind: "crisis_ambiguous" }> }
+  | {
+      name: "crisis-needs-clarification";
+      outcome: Extract<CheckInOutcome, { kind: "crisis_needs_clarification" }>;
+    }
   | { name: "no-template"; outcome: Extract<CheckInOutcome, { kind: "no_template_available" }> }
   | { name: "personalize"; outcome: Extract<CheckInOutcome, { kind: "matched" }> }
   | {
@@ -42,6 +46,9 @@ export function App() {
         break;
       case "crisis_ambiguous":
         setStep({ name: "crisis-ambiguous", outcome });
+        break;
+      case "crisis_needs_clarification":
+        setStep({ name: "crisis-needs-clarification", outcome });
         break;
       case "no_template_available":
         setStep({ name: "no-template", outcome });
@@ -119,6 +126,17 @@ export function App() {
           acknowledgement={step.outcome.acknowledgement}
           checkInId={step.outcome.checkInId}
           onContinue={(outcome) => handleOutcome(outcome as CheckInOutcome)}
+          onRestart={restart}
+        />
+      )}
+
+      {step.name === "crisis-needs-clarification" && (
+        <CrisisResources
+          response={step.outcome.response}
+          noRealTimeSupervisionNotice={step.outcome.noRealTimeSupervisionNotice}
+          clarification={step.outcome.clarification}
+          checkInId={step.outcome.checkInId}
+          onClarified={(outcome) => handleOutcome(outcome as CheckInOutcome)}
           onRestart={restart}
         />
       )}

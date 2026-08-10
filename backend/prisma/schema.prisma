@@ -124,8 +124,16 @@ model TemplateVersion {
 // resposta antes de qualquer outra lógica.
 // ---------------------------------------------------------------------------
 
+// Cinco níveis (revisão clínica, secção 5): a ideação suicida direta e a
+// autolesão passam por uma pergunta de esclarecimento automatizada em vez
+// de serem tratadas de imediato como o nível mais grave — ver
+// docs/crisis-detection.md. DIRECT_MENTION e SELF_HARM são sempre estados
+// transitórios: resolvem-se para CLEAR (escalar) ou AMBIGUOUS (manter,
+// mostrar recursos) assim que o utilizador responde à pergunta.
 enum CrisisLevel {
   CLEAR
+  SELF_HARM
+  DIRECT_MENTION
   AMBIGUOUS
   ABSENT
 

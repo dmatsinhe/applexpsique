@@ -137,7 +137,7 @@ describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () 
     expect(getRes.body.resumePositionSeconds).toBe(42);
   });
 
-  it("sinal claro de crise no check-in bloqueia a sessão automatizada e devolve os 3 blocos de recursos", async () => {
+  it("sinal claro de crise (plano) no check-in bloqueia a sessão automatizada e devolve os 3 blocos de recursos", async () => {
     const loginRes = await request(app).post("/auth/login").send({ email, password: "password123" });
     const token = loginRes.body.token as string;
 
@@ -146,7 +146,7 @@ describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () 
       .set("Authorization", `Bearer ${token}`)
       .send({
         requestedGoal: "GENERALIZED_ANXIETY",
-        recentFeelingText: "Não aguento mais viver, quero morrer.",
+        recentFeelingText: "Já tenho um plano para morrer, só falta a coragem.",
         energyLevel: 1,
       });
 
@@ -158,6 +158,32 @@ describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () 
     expect(res.body.response.regionalProfessionalSupport.length).toBeGreaterThan(0);
     expect(res.body.response.founderPrivateContact.disclaimerLabel).toContain("NÃO");
     expect(res.body.noRealTimeSupervisionNotice).toBeTruthy();
+  });
+
+  it("menção direta a suicídio pede esclarecimento via API antes de decidir a gravidade final", async () => {
+    const loginRes = await request(app).post("/auth/login").send({ email, password: "password123" });
+    const token = loginRes.body.token as string;
+
+    const checkinRes = await request(app)
+      .post("/checkin")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        requestedGoal: "GENERALIZED_ANXIETY",
+        recentFeelingText: "Não aguento mais viver, quero morrer.",
+        energyLevel: 1,
+      });
+
+    expect(checkinRes.status).toBe(201);
+    expect(checkinRes.body.kind).toBe("crisis_needs_clarification");
+    expect(checkinRes.body.clarification.level).toBe("DIRECT_MENTION");
+
+    const escalateRes = await request(app)
+      .post(`/checkin/${checkinRes.body.checkInId}/clarify-crisis`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ resolution: "ESCALATE" });
+
+    expect(escalateRes.status).toBe(200);
+    expect(escalateRes.body.kind).toBe("crisis_clear");
   });
 
   it("rejeita rotas clínicas sem token de autenticação", async () => {

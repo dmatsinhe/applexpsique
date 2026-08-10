@@ -35,6 +35,12 @@ export interface CrisisResponseBundle {
   founderPrivateContact: FounderPrivateContact;
 }
 
+export interface CrisisClarificationPrompt {
+  level: "DIRECT_MENTION" | "SELF_HARM";
+  question: string;
+  options: { label: string; resolution: "ESCALATE" | "DOWNGRADE" }[];
+}
+
 export type CheckInOutcome =
   | { kind: "crisis_clear"; response: CrisisResponseBundle; noRealTimeSupervisionNotice: string }
   | {
@@ -43,6 +49,13 @@ export type CheckInOutcome =
       response: CrisisResponseBundle;
       noRealTimeSupervisionNotice: string;
       acknowledgement: string;
+    }
+  | {
+      kind: "crisis_needs_clarification";
+      checkInId: string;
+      response: CrisisResponseBundle;
+      noRealTimeSupervisionNotice: string;
+      clarification: CrisisClarificationPrompt;
     }
   | { kind: "no_template_available"; checkInId: string; availableGoals: ClinicalGoal[] }
   | {
@@ -101,6 +114,12 @@ export const api = {
 
   continueAfterAmbiguousCrisis: (checkInId: string) =>
     request<CheckInOutcome>(`/checkin/${checkInId}/continue`, { method: "POST" }),
+
+  resolveCrisisClarification: (checkInId: string, resolution: "ESCALATE" | "DOWNGRADE") =>
+    request<CheckInOutcome>(`/checkin/${checkInId}/clarify-crisis`, {
+      method: "POST",
+      body: JSON.stringify({ resolution }),
+    }),
 
   createSession: (params: {
     templateVersionId: string;

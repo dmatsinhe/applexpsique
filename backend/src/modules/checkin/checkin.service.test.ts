@@ -78,9 +78,9 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     await prisma.$disconnect();
   });
 
-  it("sinal CLARO para a sessão imediatamente, mostra os 3 blocos e nunca oferece continuar", async () => {
+  it("sinal CLARO (intenção/plano/preparação) para a sessão imediatamente, mostra os 3 blocos e nunca oferece continuar", async () => {
     const outcome = await checkInService.submit(
-      baseSubmission({ recentFeelingText: "Só quero acabar com tudo, não aguento mais viver." }),
+      baseSubmission({ recentFeelingText: "Já tenho um plano para morrer, só falta a coragem." }),
     );
     expect(outcome.kind).toBe("crisis_clear");
     if (outcome.kind === "crisis_clear") {
@@ -89,6 +89,46 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
       expect(outcome.response.founderPrivateContact.disclaimerLabel).toContain("NÃO");
       expect(outcome.noRealTimeSupervisionNotice.length).toBeGreaterThan(0);
     }
+  });
+
+  it("menção direta a suicídio pede esclarecimento; ESCALATE bloqueia como CLARO, DOWNGRADE permite continuar", async () => {
+    const needsClarificationOutcome = await checkInService.submit(
+      baseSubmission({ recentFeelingText: "Só quero acabar com tudo, não aguento mais viver." }),
+    );
+    expect(needsClarificationOutcome.kind).toBe("crisis_needs_clarification");
+    if (needsClarificationOutcome.kind !== "crisis_needs_clarification") throw new Error("unreachable");
+    expect(needsClarificationOutcome.clarification.level).toBe("DIRECT_MENTION");
+    expect(needsClarificationOutcome.clarification.options.length).toBeGreaterThanOrEqual(2);
+
+    const escalated = await checkInService.resolveCrisisClarification(
+      needsClarificationOutcome.checkInId,
+      "ESCALATE",
+    );
+    expect(escalated.kind).toBe("crisis_clear");
+
+    await expect(
+      checkInService.resolveCrisisClarification(needsClarificationOutcome.checkInId, "DOWNGRADE"),
+    ).rejects.toThrow();
+
+    const secondSubmission = await checkInService.submit(
+      baseSubmission({ recentFeelingText: "Queria desaparecer para sempre, às vezes penso nisso." }),
+    );
+    if (secondSubmission.kind !== "crisis_needs_clarification") throw new Error("unreachable");
+
+    const downgraded = await checkInService.resolveCrisisClarification(
+      secondSubmission.checkInId,
+      "DOWNGRADE",
+    );
+    expect(downgraded.kind).toBe("crisis_ambiguous");
+  });
+
+  it("autolesão pede esclarecimento próprio, distinto de menção direta", async () => {
+    const outcome = await checkInService.submit(
+      baseSubmission({ recentFeelingText: "Ando a magoar-me de propósito quase todos os dias." }),
+    );
+    expect(outcome.kind).toBe("crisis_needs_clarification");
+    if (outcome.kind !== "crisis_needs_clarification") throw new Error("unreachable");
+    expect(outcome.clarification.level).toBe("SELF_HARM");
   });
 
   it("sinal AMBÍGUO mostra recursos + reconhecimento, e só continua após confirmação explícita", async () => {

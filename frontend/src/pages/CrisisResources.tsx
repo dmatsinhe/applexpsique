@@ -1,14 +1,21 @@
 import { useState } from "react";
-import { api, type CrisisResponseBundle } from "../api/client.js";
+import { api, type CrisisClarificationPrompt, type CrisisResponseBundle } from "../api/client.js";
 
 interface Props {
   response: CrisisResponseBundle;
   noRealTimeSupervisionNotice: string;
   /** Presente só em sinal AMBÍGUO — nunca em sinal CLARO. */
   acknowledgement?: string;
-  /** Presente só em sinal AMBÍGUO — permite continuar após reconhecimento explícito. */
+  /**
+   * Presente só em DIRECT_MENTION/SELF_HARM: uma pergunta de esclarecimento
+   * automatizada, nunca uma avaliação humana — a resposta da própria
+   * pessoa decide se o sinal escala ou desce de gravidade.
+   */
+  clarification?: CrisisClarificationPrompt;
+  /** Presente em sinal AMBÍGUO ou quando há pergunta de esclarecimento. */
   checkInId?: string;
   onContinue?: (outcome: unknown) => void;
+  onClarified?: (outcome: unknown) => void;
   onRestart: () => void;
 }
 
@@ -22,17 +29,22 @@ interface Props {
  *      resposta a crise.
  * A app nunca promete supervisão humana em tempo real — isso é comunicado
  * de forma explícita e visível (`noRealTimeSupervisionNotice`), nunca
- * escondido atrás de um ecrã genérico.
+ * escondido atrás de um ecrã genérico. Em DIRECT_MENTION/SELF_HARM, a
+ * pergunta de esclarecimento é sempre automatizada — nunca finge que há
+ * alguém do outro lado a avaliar a resposta.
  */
 export function CrisisResources({
   response,
   noRealTimeSupervisionNotice,
   acknowledgement,
+  clarification,
   checkInId,
   onContinue,
+  onClarified,
   onRestart,
 }: Props) {
   const [continuing, setContinuing] = useState(false);
+  const [resolving, setResolving] = useState<"ESCALATE" | "DOWNGRADE" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleContinue() {
@@ -48,11 +60,44 @@ export function CrisisResources({
     }
   }
 
+  async function handleClarify(resolution: "ESCALATE" | "DOWNGRADE") {
+    if (!checkInId || !onClarified) return;
+    setResolving(resolution);
+    setError(null);
+    try {
+      const outcome = await api.resolveCrisisClarification(checkInId, resolution);
+      onClarified(outcome);
+    } catch {
+      setError("Não foi possível registar a sua resposta. Os recursos de apoio acima continuam disponíveis.");
+      setResolving(null);
+    }
+  }
+
   return (
     <div className="screen">
       {acknowledgement && <p className="acknowledgement">{acknowledgement}</p>}
 
       <p className="supervision-notice">{noRealTimeSupervisionNotice}</p>
+
+      {clarification && (
+        <section className="crisis-block clarification-block">
+          <h2>{clarification.question}</h2>
+          {error && <p className="error" role="alert">{error}</p>}
+          <div className="clarification-options">
+            {clarification.options.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                className="secondary"
+                disabled={resolving !== null}
+                onClick={() => handleClarify(option.resolution)}
+              >
+                {resolving === option.resolution ? "A registar…" : option.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="crisis-block">
         <h2>Recursos de crise imediatos</h2>
@@ -92,7 +137,7 @@ export function CrisisResources({
         <p>{response.founderPrivateContact.bookingContact}</p>
       </section>
 
-      {checkInId && onContinue && (
+      {checkInId && onContinue && !clarification && (
         <>
           <p className="explainer">
             A decisão de continuar é sua. Os recursos acima continuam disponíveis a qualquer momento.

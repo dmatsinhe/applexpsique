@@ -1,6 +1,12 @@
-import { CrisisService } from "../crisis/crisis.service.js";
+import { CrisisService, resolveClarification, type ClarificationResolution } from "../crisis/crisis.service.js";
+import { needsClarification } from "../crisis/crisis.types.js";
 import { TemplateService } from "../templates/template.service.js";
-import { createCheckIn, getCheckIn, recordMatch } from "./checkin.repository.js";
+import {
+  createCheckIn,
+  getCheckIn,
+  recordMatch,
+  updateCrisisLevel,
+} from "./checkin.repository.js";
 import { freeTextAnswers, type CheckInOutcome, type CheckInSubmission } from "./checkin.types.js";
 
 export class CheckInService {
@@ -34,6 +40,20 @@ export class CheckInService {
       };
     }
 
+    if (needsClarification(crisisOutcome.result.level)) {
+      const { id } = await createCheckIn({
+        submission,
+        crisisSignalLevel: crisisOutcome.result.level,
+      });
+      return {
+        kind: "crisis_needs_clarification",
+        checkInId: id,
+        response: crisisOutcome.response!,
+        noRealTimeSupervisionNotice: crisisOutcome.noRealTimeSupervisionNotice!,
+        clarification: crisisOutcome.clarification!,
+      };
+    }
+
     if (crisisOutcome.result.level === "AMBIGUOUS") {
       const { id } = await createCheckIn({ submission, crisisSignalLevel: "AMBIGUOUS" });
       return {
@@ -50,17 +70,67 @@ export class CheckInService {
   }
 
   /**
+   * Resolve um check-in em DIRECT_MENTION/SELF_HARM depois de o utilizador
+   * responder à pergunta de esclarecimento — nunca uma avaliação humana,
+   * apenas o próprio relato da pessoa a decidir a gravidade final (secção
+   * 5). ESCALATE nunca mais permite continuar; DOWNGRADE devolve o mesmo
+   * fluxo de reconhecimento + oferta de continuar do nível AMBIGUOUS.
+   */
+  async resolveCrisisClarification(
+    checkInId: string,
+    resolution: ClarificationResolution,
+  ): Promise<CheckInOutcome> {
+    const checkIn = await getCheckIn(checkInId);
+
+    if (!needsClarification(checkIn.crisisSignalLevel)) {
+      throw new Error(
+        "Este check-in não está à espera de uma resposta de esclarecimento.",
+      );
+    }
+
+    const resolvedLevel = resolveClarification(resolution);
+    await updateCrisisLevel(checkInId, resolvedLevel);
+
+    if (resolvedLevel === "CLEAR") {
+      const outcome = this.crisisService.resolvedOutcome(
+        resolution,
+        this.crisisService.classifierVersion,
+        "pt-PT",
+      );
+      return {
+        kind: "crisis_clear",
+        response: outcome.response!,
+        noRealTimeSupervisionNotice: outcome.noRealTimeSupervisionNotice!,
+      };
+    }
+
+    const outcome = this.crisisService.resolvedOutcome(
+      resolution,
+      this.crisisService.classifierVersion,
+      "pt-PT",
+    );
+    return {
+      kind: "crisis_ambiguous",
+      checkInId,
+      response: outcome.response!,
+      noRealTimeSupervisionNotice: outcome.noRealTimeSupervisionNotice!,
+      acknowledgement: outcome.acknowledgement!,
+    };
+  }
+
+  /**
    * Só pode ser chamado depois de o utilizador ter visto o reconhecimento
    * de sinal ambíguo e escolhido ativamente continuar — nunca automático.
-   * Re-valida que o check-in não foi classificado como CLEAR (defesa em
-   * profundidade: nunca confiar só no estado do cliente).
+   * Re-valida que o check-in está mesmo em AMBIGUOUS (defesa em
+   * profundidade: nunca confiar só no estado do cliente, nem permitir
+   * saltar uma pergunta de esclarecimento por resolver).
    */
   async continueAfterAmbiguousAcknowledgement(checkInId: string): Promise<CheckInOutcome> {
     const checkIn = await getCheckIn(checkInId);
 
-    if (checkIn.crisisSignalLevel === "CLEAR") {
+    if (checkIn.crisisSignalLevel !== "AMBIGUOUS") {
       throw new Error(
-        "Não é possível continuar um check-in com sinal de crise CLARO — sem exceções.",
+        "Só é possível continuar um check-in com sinal AMBIGUOUS já reconhecido — sem exceções.",
       );
     }
     if (!checkIn.requestedGoal) {

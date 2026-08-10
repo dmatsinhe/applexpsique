@@ -79,14 +79,22 @@ como personalizáveis num template).
    `/sessions`. A data de nascimento em si não é retida — só o resultado
    (`isAdult: true`, `ageVerifiedAt`) para minimizar dados sensíveis.
 2. `POST /checkin` — recebe 3–5 respostas. **Antes de qualquer outra lógica**,
-   cada resposta de texto livre passa pelo `CrisisClassifier`.
-   - Nível `CLEAR` → devolve imediatamente os três blocos de recursos de
-     crise (ver docs/crisis-detection.md), sem oferecer sessão. Regista
-     `CrisisEvent` anonimizado.
+   cada resposta de texto livre passa pelo `CrisisClassifier`, que devolve um
+   de cinco níveis (taxonomia revista clinicamente — ver
+   docs/crisis-detection.md):
+   - Nível `CLEAR` (intenção/plano/comportamento preparatório) → devolve
+     imediatamente os três blocos de recursos de crise, sem oferecer sessão
+     nem pergunta intermédia. Regista `CrisisEvent` anonimizado.
+   - Níveis `DIRECT_MENTION` (menção direta a suicídio) e `SELF_HARM`
+     (autolesão) → devolve os três blocos de recursos + uma pergunta de
+     esclarecimento automatizada própria de cada nível
+     (`POST /checkin/:id/clarify-crisis`). A resposta da própria pessoa —
+     nunca uma avaliação humana — resolve para `CLEAR` (escalar) ou
+     `AMBIGUOUS` (descer).
    - Nível `AMBIGUOUS` → devolve os três blocos de recursos + reconhecimento
      explícito do sinal, e só então oferece a opção de continuar (nunca
      decide sozinho que está tudo bem).
-   - Em ambos os níveis acima, a resposta inclui sempre um aviso explícito
+   - Em todos os níveis acima, a resposta inclui sempre um aviso explícito
      de que a app não tem supervisão humana em tempo real — nunca promete
      uma notificação que não consegue garantir.
    - Nível `ABSENT` → segue para seleção de template.

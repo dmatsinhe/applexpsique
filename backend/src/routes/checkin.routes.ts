@@ -37,4 +37,17 @@ router.post(
   }),
 );
 
+const clarifySchema = z.object({
+  resolution: z.enum(["ESCALATE", "DOWNGRADE"]),
+});
+
+router.post(
+  "/:id/clarify-crisis",
+  asyncRoute(async (req, res) => {
+    const { resolution } = clarifySchema.parse(req.body);
+    const outcome = await checkInService.resolveCrisisClarification(req.params.id, resolution);
+    res.status(200).json(outcome);
+  }),
+);
+
 export default router;

@@ -110,6 +110,24 @@ button.secondary {
   gap: 1rem;
 }
 
+.clarification-block {
+  border: 2px solid #1f2937;
+  border-radius: 0.6rem;
+  padding: 1rem;
+  background: white;
+}
+
+.clarification-block h2 {
+  margin-top: 0;
+}
+
+.clarification-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
 .crisis-resources li {
   border: 1px solid #d1d5db;
   border-radius: 0.6rem;

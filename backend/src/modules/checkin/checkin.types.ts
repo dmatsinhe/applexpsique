@@ -1,6 +1,7 @@
 import type { ClinicalGoal } from "../templates/template.types.js";
 import type { CrisisLevel } from "../crisis/crisis.types.js";
 import type { CrisisResponseBundle } from "../crisis/crisis-resources.js";
+import type { CrisisClarificationPrompt } from "../crisis/crisis.service.js";
 
 /**
  * Check-in de 3–5 perguntas (secção 1). Determina QUAL template é usado,
@@ -32,6 +33,13 @@ export type CheckInOutcome =
       response: CrisisResponseBundle;
       noRealTimeSupervisionNotice: string;
       acknowledgement: string;
+    }
+  | {
+      kind: "crisis_needs_clarification";
+      checkInId: string;
+      response: CrisisResponseBundle;
+      noRealTimeSupervisionNotice: string;
+      clarification: CrisisClarificationPrompt;
     }
   | { kind: "no_template_available"; checkInId: string; availableGoals: ClinicalGoal[] }
   | {

@@ -46,6 +46,19 @@ export async function getCheckIn(id: string) {
   };
 }
 
+/**
+ * Atualiza o nível de crise depois de o utilizador responder à pergunta
+ * de esclarecimento (DIRECT_MENTION/SELF_HARM → CLEAR ou AMBIGUOUS). O
+ * valor anterior não é mantido em histórico — o nível guardado reflete
+ * sempre a avaliação final do check-in.
+ */
+export async function updateCrisisLevel(checkInId: string, level: CrisisLevel): Promise<void> {
+  await prisma.checkIn.update({
+    where: { id: checkInId },
+    data: { crisisSignalLevel: level },
+  });
+}
+
 export async function recordMatch(params: {
   checkInId: string;
   templateVersionId: string | null;
