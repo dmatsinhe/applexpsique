@@ -91,6 +91,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return (await res.json()) as T;
 }
 
+async function requestText(path: string): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}${path}`);
+  if (!res.ok) throw new ApiError(`Erro ${res.status}`);
+  return res.text();
+}
+
 export const api = {
   register: (params: { email: string; password: string; birthDate: string }) =>
     request<{ userId: string; token: string }>("/auth/register", {
@@ -153,6 +159,8 @@ export const api = {
       experienceSummary: string;
       howItWorks: string;
     }>("/founder"),
+
+  getPrivacyPolicyMarkdown: () => requestText("/legal/privacy-policy"),
 
   exportAccountData: () => request<Record<string, unknown>>("/account/export"),
 

@@ -1,21 +1,23 @@
 # Política de Privacidade e Proteção de Dados
 
-**Aplicação:** [nome da aplicação — a definir]
+**Aplicação:** Lexpsique
 **Versão:** 1.0
 **Data de entrada em vigor:** [a preencher quando publicada]
 
-> **Nota interna (remover antes de publicar):** este documento descreve
-> apenas o que a aplicação, tal como está construída hoje, realmente faz.
-> Não descreve marcação de sessões, mensagens com profissionais,
-> pagamentos, gravação de áudio/vídeo, transcrição, nem partilha entre
-> vários profissionais — nenhuma destas funcionalidades existe no código
-> ainda. Quando forem construídas, esta política tem de ser atualizada
-> **antes** de irem ao ar, não depois.
+<!--
+Nota interna (não aparece na versão renderizada): este documento descreve
+apenas o que a aplicação, tal como está construída hoje, realmente faz.
+Não descreve marcação de sessões, mensagens com profissionais, pagamentos,
+gravação de áudio/vídeo, transcrição, nem partilha entre vários
+profissionais — nenhuma destas funcionalidades existe no código ainda.
+Quando forem construídas, esta política tem de ser atualizada ANTES de
+irem ao ar, não depois. Aprovado pela fundadora em 2026-08-10.
+-->
 
 ## 1. Quem é responsável pelos dados
 
-A presente Política explica como são tratados os dados pessoais através da
-aplicação [nome da aplicação], em conformidade com:
+A presente Política explica como são tratados os dados pessoais através
+desta aplicação, em conformidade com:
 
 - Regulamento Geral sobre a Proteção de Dados — Regulamento (UE) 2016/679
   ("RGPD");

@@ -8,6 +8,7 @@ import { Personalize } from "./pages/Personalize.js";
 import { SessionResult } from "./pages/SessionResult.js";
 import { FounderProfile } from "./pages/FounderProfile.js";
 import { Account } from "./pages/Account.js";
+import { PrivacyPolicy } from "./pages/PrivacyPolicy.js";
 
 type Step =
   | { name: "age-gate" }
@@ -32,7 +33,7 @@ type Step =
       };
     };
 
-type Overlay = "none" | "founder-profile" | "account";
+type Overlay = "none" | "founder-profile" | "account" | "privacy-policy";
 
 export function App() {
   const [step, setStep] = useState<Step>({ name: "age-gate" });
@@ -86,6 +87,14 @@ export function App() {
     );
   }
 
+  if (overlay === "privacy-policy") {
+    return (
+      <main className="app">
+        <PrivacyPolicy onBack={() => setOverlay("none")} />
+      </main>
+    );
+  }
+
   return (
     <main className="app">
       <nav className="top-nav">
@@ -96,6 +105,9 @@ export function App() {
         )}
         <button type="button" className="link-button" onClick={() => setOverlay("founder-profile")}>
           Sobre a fundadora · Como isto funciona
+        </button>
+        <button type="button" className="link-button" onClick={() => setOverlay("privacy-policy")}>
+          Política de Privacidade
         </button>
       </nav>
 

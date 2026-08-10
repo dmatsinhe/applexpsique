@@ -190,3 +190,45 @@ button.secondary {
 .anchor-phrase {
   font-style: italic;
 }
+
+.markdown-content {
+  line-height: 1.6;
+  margin-top: 1.5rem;
+}
+
+.markdown-content h1 {
+  font-size: 1.4rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.1rem;
+  margin-top: 1.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.2rem;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid #d1d5db;
+  margin-left: 0;
+  padding-left: 1rem;
+  color: #4b5563;
+}
