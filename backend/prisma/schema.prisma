@@ -86,18 +86,16 @@ model TemplateVersion {
 
   // Conteúdo estruturado — nunca texto livre. Cada secção é nomeada para que
   // a personalização só possa tocar em placeholders explícitos, nunca
-  // reescrever indução/estrutura/sugestões centrais.
-  // Forma esperada (validada em código, não só no schema):
+  // reescrever a estrutura ou o texto de cada fase do guião.
+  // Forma esperada (validada em código via template-content.schema.ts):
   // {
-  //   induction: string,               // fixo, não personalizável
-  //   coreSuggestions: string[],       // fixo, não personalizável
+  //   personalizableOpening: string,   // ÚNICO campo com {{nome}} / {{situacao}}
+  //   sections: [                      // fixo, ordenado, não personalizável
+  //     { id: string, title: string, body: string }, ...
+  //   ],
   //   anchorPhrases: string[],         // fixo, não personalizável
   //   closing: string,                 // fixo, não personalizável
-  //   personalizableFields: {          // únicos pontos que a IA pode preencher
-  //     nameSlot: boolean,
-  //     situationSlot: boolean,
-  //     paceDirectiveSlot: boolean
-  //   }
+  //   paceOptions: string[],           // catálogo fechado de ritmos
   // }
   content Json
 

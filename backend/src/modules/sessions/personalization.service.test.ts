@@ -13,11 +13,13 @@ function makeTemplate(): ActiveTemplateVersion {
     approvedBy: "fundadora-teste@lexpsique.pt",
     approvedAt: new Date(),
     content: {
-      induction: "Indução fixa aprovada.",
-      coreSuggestions: ["Sugestão fixa 1", "Sugestão fixa 2"],
+      personalizableOpening: "Olá {{nome}}, vamos focar-nos em {{situacao}}.",
+      sections: [
+        { id: "inducao", title: "Indução", body: "Indução fixa aprovada." },
+        { id: "sugestoes-centrais", title: "Sugestões centrais", body: "Sugestão fixa 1\nSugestão fixa 2" },
+      ],
       anchorPhrases: ["Âncora A", "Âncora B", "Âncora C"],
       closing: "Encerramento fixo aprovado.",
-      personalizableOpening: "Olá {{nome}}, vamos focar-nos em {{situacao}}.",
       paceOptions: ["lento", "moderado"],
     },
   };
@@ -31,8 +33,7 @@ describe("PersonalizationService — limites rígidos de personalização", () =
     const rendered = service.render(template, { name: "Ana", situationNote: "o exame de amanhã", pace: "lento" });
 
     expect(rendered.opening).toBe("Olá Ana, vamos focar-nos em o exame de amanhã.");
-    expect(rendered.induction).toBe(template.content.induction);
-    expect(rendered.coreSuggestions).toEqual(template.content.coreSuggestions);
+    expect(rendered.sections).toEqual(template.content.sections);
     expect(rendered.closing).toBe(template.content.closing);
   });
 

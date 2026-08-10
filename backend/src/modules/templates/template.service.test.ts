@@ -7,11 +7,17 @@ const service = new TemplateService();
 
 function testContent(topic: string): TemplateContent {
   return {
-    induction: `Indução de teste para ${topic}.`,
-    coreSuggestions: [`Sugestão de teste 1 para ${topic}.`, `Sugestão de teste 2 para ${topic}.`],
+    personalizableOpening: "Olá {{nome}}, vamos trabalhar em {{situacao}}.",
+    sections: [
+      { id: "inducao", title: "Indução", body: `Indução de teste para ${topic}.` },
+      {
+        id: "sugestoes-centrais",
+        title: "Sugestões centrais",
+        body: `Sugestão de teste 1 para ${topic}.\nSugestão de teste 2 para ${topic}.`,
+      },
+    ],
     anchorPhrases: ["Âncora de teste A", "Âncora de teste B"],
     closing: `Encerramento de teste para ${topic}.`,
-    personalizableOpening: "Olá {{nome}}, vamos trabalhar em {{situacao}}.",
     paceOptions: ["lento", "moderado"],
   };
 }

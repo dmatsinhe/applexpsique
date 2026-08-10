@@ -13,11 +13,13 @@ const slug = "teste-sessao-integracao";
 
 function testContent(): TemplateContent {
   return {
-    induction: "Indução fixa de teste.",
-    coreSuggestions: ["Sugestão fixa 1", "Sugestão fixa 2"],
+    personalizableOpening: "Olá {{nome}}, hoje vamos trabalhar {{situacao}}.",
+    sections: [
+      { id: "inducao", title: "Indução", body: "Indução fixa de teste." },
+      { id: "sugestoes-centrais", title: "Sugestões centrais", body: "Sugestão fixa 1\nSugestão fixa 2" },
+    ],
     anchorPhrases: ["Âncora A", "Âncora B"],
     closing: "Encerramento fixo de teste.",
-    personalizableOpening: "Olá {{nome}}, hoje vamos trabalhar {{situacao}}.",
     paceOptions: ["lento", "moderado"],
   };
 }

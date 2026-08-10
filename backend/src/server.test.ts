@@ -13,11 +13,10 @@ const slug = "teste-e2e-ansiedade";
 
 function testContent(): TemplateContent {
   return {
-    induction: "Indução fixa E2E.",
-    coreSuggestions: ["Sugestão E2E 1"],
+    personalizableOpening: "Olá {{nome}}, hoje vamos abordar {{situacao}}.",
+    sections: [{ id: "inducao", title: "Indução", body: "Indução fixa E2E." }],
     anchorPhrases: ["Âncora E2E"],
     closing: "Encerramento fixo E2E.",
-    personalizableOpening: "Olá {{nome}}, hoje vamos abordar {{situacao}}.",
     paceOptions: ["lento", "moderado"],
   };
 }

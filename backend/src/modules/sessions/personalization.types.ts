@@ -1,7 +1,9 @@
+import type { TemplateSection } from "../templates/template.types.js";
+
 /**
  * Únicos campos que a personalização pode preencher (secção 1): nome,
  * situação específica, ritmo, e quais frases-âncora (já escritas e
- * aprovadas) enfatizar. Nunca estrutura, indução, ou sugestões centrais.
+ * aprovadas) enfatizar. Nunca estrutura, secções, ou o texto dentro delas.
  */
 export interface PersonalizationInput {
   name: string;
@@ -14,8 +16,7 @@ export interface PersonalizationInput {
 
 export interface RenderedSession {
   opening: string;
-  induction: string;
-  coreSuggestions: string[];
+  sections: TemplateSection[];
   emphasizedAnchorPhrases: string[];
   closing: string;
   pace: string;

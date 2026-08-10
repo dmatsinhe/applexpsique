@@ -21,17 +21,24 @@ const PLACEHOLDER_PREFIX = "[PLACEHOLDER DE DESENVOLVIMENTO — NÃO É CONTEÚD
 
 function placeholderContent(topic: string): TemplateContent {
   return {
-    induction: `${PLACEHOLDER_PREFIX}Indução de exemplo para "${topic}". Substituir por texto aprovado.`,
-    coreSuggestions: [
-      `${PLACEHOLDER_PREFIX}Sugestão central de exemplo 1 para "${topic}".`,
-      `${PLACEHOLDER_PREFIX}Sugestão central de exemplo 2 para "${topic}".`,
+    personalizableOpening: `${PLACEHOLDER_PREFIX}Olá {{nome}}, vamos focar-nos hoje em {{situacao}}.`,
+    sections: [
+      {
+        id: "inducao",
+        title: "Indução",
+        body: `${PLACEHOLDER_PREFIX}Indução de exemplo para "${topic}". Substituir por texto aprovado.`,
+      },
+      {
+        id: "sugestoes-centrais",
+        title: "Sugestões centrais",
+        body: `${PLACEHOLDER_PREFIX}Sugestão central de exemplo 1 para "${topic}".\n${PLACEHOLDER_PREFIX}Sugestão central de exemplo 2 para "${topic}".`,
+      },
     ],
     anchorPhrases: [
       `${PLACEHOLDER_PREFIX}Frase-âncora de exemplo A.`,
       `${PLACEHOLDER_PREFIX}Frase-âncora de exemplo B.`,
     ],
     closing: `${PLACEHOLDER_PREFIX}Encerramento de exemplo para "${topic}".`,
-    personalizableOpening: `${PLACEHOLDER_PREFIX}Olá {{nome}}, vamos focar-nos hoje em {{situacao}}.`,
     paceOptions: ["lento", "moderado"],
   };
 }

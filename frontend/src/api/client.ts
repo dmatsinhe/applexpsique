@@ -35,6 +35,12 @@ export interface CrisisResponseBundle {
   founderPrivateContact: FounderPrivateContact;
 }
 
+export interface TemplateSection {
+  id: string;
+  title: string;
+  body: string;
+}
+
 export interface CrisisClarificationPrompt {
   level: "DIRECT_MENTION" | "SELF_HARM";
   question: string;
@@ -140,8 +146,7 @@ export const api = {
       sessionId: string;
       rendered: {
         opening: string;
-        induction: string;
-        coreSuggestions: string[];
+        sections: TemplateSection[];
         emphasizedAnchorPhrases: string[];
         closing: string;
         pace: string;

@@ -54,8 +54,7 @@ export class PersonalizationService {
 
     return {
       opening,
-      induction: content.induction,
-      coreSuggestions: content.coreSuggestions,
+      sections: content.sections,
       emphasizedAnchorPhrases: emphasized,
       closing: content.closing,
       pace: input.pace,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api, ApiError } from "../api/client.js";
+import { api, ApiError, type TemplateSection } from "../api/client.js";
 
 interface Props {
   templateVersionId: string;
@@ -10,8 +10,7 @@ interface Props {
     sessionId: string;
     rendered: {
       opening: string;
-      induction: string;
-      coreSuggestions: string[];
+      sections: TemplateSection[];
       emphasizedAnchorPhrases: string[];
       closing: string;
       pace: string;

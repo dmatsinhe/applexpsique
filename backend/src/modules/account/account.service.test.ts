@@ -16,11 +16,10 @@ const slug = "teste-account-integracao";
 
 function testContent(): TemplateContent {
   return {
-    induction: "Indução de teste.",
-    coreSuggestions: ["Sugestão de teste."],
+    personalizableOpening: "Olá {{nome}}, hoje vamos falar de {{situacao}}.",
+    sections: [{ id: "inducao", title: "Indução", body: "Indução de teste." }],
     anchorPhrases: ["Âncora de teste."],
     closing: "Encerramento de teste.",
-    personalizableOpening: "Olá {{nome}}, hoje vamos falar de {{situacao}}.",
     paceOptions: ["lento"],
   };
 }

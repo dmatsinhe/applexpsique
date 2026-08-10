@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { setAuthToken, type CheckInOutcome } from "./api/client.js";
+import { setAuthToken, type CheckInOutcome, type TemplateSection } from "./api/client.js";
 import { AgeGate } from "./pages/AgeGate.js";
 import { CheckIn } from "./pages/CheckIn.js";
 import { CrisisResources } from "./pages/CrisisResources.js";
@@ -25,8 +25,7 @@ type Step =
       name: "session-result";
       rendered: {
         opening: string;
-        induction: string;
-        coreSuggestions: string[];
+        sections: TemplateSection[];
         emphasizedAnchorPhrases: string[];
         closing: string;
         pace: string;

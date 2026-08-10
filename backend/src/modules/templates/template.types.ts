@@ -13,11 +13,23 @@ export const TEMPLATE_STATUSES = ["DRAFT", "APPROVED", "RETIRED"] as const;
 export type TemplateStatus = (typeof TEMPLATE_STATUSES)[number];
 
 /**
+ * Uma fase nomeada e ordenada do guião clínico (ex.: preparação, indução,
+ * aprofundamento, redução do esforço, imagem de segurança, reformulação,
+ * sugestões pós-hipnóticas, ensaio mental, regresso). Corpo inteiramente
+ * fixo — a ordem e o texto de cada secção são exatamente os escritos e
+ * aprovados pela fundadora, nunca reagrupados nem reescritos pela app.
+ */
+export interface TemplateSection {
+  id: string;
+  title: string;
+  body: string;
+}
+
+/**
  * Corpo estruturado de um template. Ver docs/database-schema.md.
  *
- * `induction`, `coreSuggestions`, `anchorPhrases` e `closing` são
- * inteiramente fixos — escritos e aprovados pela fundadora, nunca tocados
- * pela camada de personalização.
+ * `sections`, `anchorPhrases` e `closing` são inteiramente fixos — escritos
+ * e aprovados pela fundadora, nunca tocados pela camada de personalização.
  *
  * `personalizableOpening` é a ÚNICA frase com placeholders (`{{nome}}`,
  * `{{situacao}}`) — o texto à volta dos placeholders também é escrito e
@@ -29,11 +41,10 @@ export type TemplateStatus = (typeof TEMPLATE_STATUSES)[number];
  * inventar uma opção nova.
  */
 export interface TemplateContent {
-  induction: string;
-  coreSuggestions: string[];
+  personalizableOpening: string;
+  sections: TemplateSection[];
   anchorPhrases: string[];
   closing: string;
-  personalizableOpening: string;
   paceOptions: string[];
 }
 

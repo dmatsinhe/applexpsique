@@ -25,11 +25,13 @@ function baseSubmission(overrides: Partial<CheckInSubmission> = {}): CheckInSubm
 
 function testContent(): TemplateContent {
   return {
-    induction: "Indução de teste.",
-    coreSuggestions: ["Sugestão 1", "Sugestão 2"],
+    personalizableOpening: "Olá {{nome}}, vamos focar-nos em {{situacao}}.",
+    sections: [
+      { id: "inducao", title: "Indução", body: "Indução de teste." },
+      { id: "sugestoes-centrais", title: "Sugestões centrais", body: "Sugestão 1\nSugestão 2" },
+    ],
     anchorPhrases: ["Âncora A", "Âncora B"],
     closing: "Encerramento de teste.",
-    personalizableOpening: "Olá {{nome}}, vamos focar-nos em {{situacao}}.",
     paceOptions: ["lento", "moderado"],
   };
 }

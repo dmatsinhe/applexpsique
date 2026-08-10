@@ -1,8 +1,9 @@
+import type { TemplateSection } from "../api/client.js";
+
 interface Props {
   rendered: {
     opening: string;
-    induction: string;
-    coreSuggestions: string[];
+    sections: TemplateSection[];
     emphasizedAnchorPhrases: string[];
     closing: string;
     pace: string;
@@ -22,9 +23,13 @@ export function SessionResult({ rendered, onRestart }: Props) {
       <p className="pace-tag">Ritmo: {rendered.pace}</p>
       <section>
         <p>{rendered.opening}</p>
-        <p>{rendered.induction}</p>
-        {rendered.coreSuggestions.map((s, i) => (
-          <p key={i}>{s}</p>
+        {rendered.sections.map((section) => (
+          <div key={section.id} className="session-section">
+            <h2>{section.title}</h2>
+            {section.body.split("\n").map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
+          </div>
         ))}
         {rendered.emphasizedAnchorPhrases.map((phrase, i) => (
           <p key={i} className="anchor-phrase">

@@ -191,6 +191,15 @@ button.secondary {
   font-style: italic;
 }
 
+.session-section {
+  margin-top: 1.5rem;
+}
+
+.session-section h2 {
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
+}
+
 .markdown-content {
   line-height: 1.6;
   margin-top: 1.5rem;
