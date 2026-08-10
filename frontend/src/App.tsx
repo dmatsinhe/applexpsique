@@ -6,6 +6,7 @@ import { CrisisResources } from "./pages/CrisisResources.js";
 import { NoTemplateAvailable } from "./pages/NoTemplateAvailable.js";
 import { Personalize } from "./pages/Personalize.js";
 import { SessionResult } from "./pages/SessionResult.js";
+import { FounderProfile } from "./pages/FounderProfile.js";
 
 type Step =
   | { name: "age-gate" }
@@ -28,6 +29,7 @@ type Step =
 
 export function App() {
   const [step, setStep] = useState<Step>({ name: "age-gate" });
+  const [showFounderProfile, setShowFounderProfile] = useState(false);
 
   function handleOutcome(outcome: CheckInOutcome) {
     switch (outcome.kind) {
@@ -50,8 +52,22 @@ export function App() {
     setStep({ name: "checkin" });
   }
 
+  if (showFounderProfile) {
+    return (
+      <main className="app">
+        <FounderProfile onBack={() => setShowFounderProfile(false)} />
+      </main>
+    );
+  }
+
   return (
     <main className="app">
+      <nav className="top-nav">
+        <button type="button" className="link-button" onClick={() => setShowFounderProfile(true)}>
+          Sobre a fundadora · Como isto funciona
+        </button>
+      </nav>
+
       {step.name === "age-gate" && (
         <AgeGate
           onRegistered={(token) => {

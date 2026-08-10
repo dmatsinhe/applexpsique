@@ -127,7 +127,11 @@ export const api = {
     request<{
       name: string;
       credentials: string;
+      licenseNumber: string;
       methodology: string[];
+      academicCredentials: string[];
+      clinicalCertifications: string[];
+      experienceSummary: string;
       howItWorks: string;
     }>("/founder"),
 };

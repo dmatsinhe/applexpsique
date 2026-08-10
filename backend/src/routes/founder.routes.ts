@@ -9,8 +9,26 @@ import { FOUNDER_PROFILE } from "../lib/founder-profile.js";
 const router = Router();
 
 router.get("/", (_req, res) => {
-  const { name, credentials, methodology, howItWorks } = FOUNDER_PROFILE;
-  res.json({ name, credentials, methodology, howItWorks });
+  const {
+    name,
+    credentials,
+    licenseNumber,
+    methodology,
+    academicCredentials,
+    clinicalCertifications,
+    experienceSummary,
+    howItWorks,
+  } = FOUNDER_PROFILE;
+  res.json({
+    name,
+    credentials,
+    licenseNumber,
+    methodology,
+    academicCredentials,
+    clinicalCertifications,
+    experienceSummary,
+    howItWorks,
+  });
 });
 
 export default router;
