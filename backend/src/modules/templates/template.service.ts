@@ -4,6 +4,7 @@ import {
   findActiveApprovedVersionForGoal,
   getApprovedVersionById,
   listAvailableGoals,
+  retireVersion,
   type ActiveTemplateVersion,
 } from "./template.repository.js";
 import type { ClinicalGoal, TemplateContent } from "./template.types.js";
@@ -51,5 +52,9 @@ export class TemplateService {
       throw new Error("approvedBy é obrigatório para aprovar um template");
     }
     return approveVersion({ versionId, approvedBy });
+  }
+
+  async retire(versionId: string) {
+    return retireVersion(versionId);
   }
 }

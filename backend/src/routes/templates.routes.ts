@@ -43,4 +43,12 @@ router.post(
   }),
 );
 
+router.post(
+  "/:versionId/retire",
+  asyncRoute(async (req, res) => {
+    await templateService.retire(req.params.versionId);
+    res.status(204).send();
+  }),
+);
+
 export default router;

@@ -104,4 +104,60 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
     expect(activeVersions).toHaveLength(1);
     expect(activeVersions[0].id).toBe(v2.versionId);
   });
+
+  it("aprovar um template DIFERENTE para o mesmo objetivo retira o anterior (nunca dois candidatos para o mesmo objetivo)", async () => {
+    const otherSlug = `${slug}-concorrente`;
+    await cleanupSlug(otherSlug);
+
+    const placeholder = await service.submitDraft({
+      slug,
+      clinicalGoal: "HABIT",
+      title: "Hábito (placeholder)",
+      content: testContent("hábito placeholder"),
+    });
+    await service.approve(placeholder.versionId, "fundadora-teste@lexpsique.pt");
+
+    const real = await service.submitDraft({
+      slug: otherSlug,
+      clinicalGoal: "HABIT",
+      title: "Hábito (real)",
+      content: testContent("hábito real"),
+    });
+    await service.approve(real.versionId, "fundadora-teste@lexpsique.pt");
+
+    const result = await service.matchGoal("HABIT");
+    expect(result.matched).toBe(true);
+    if (result.matched) {
+      expect(result.template.id).toBe(real.versionId);
+    }
+
+    const retiredPlaceholder = await prisma.templateVersion.findUniqueOrThrow({
+      where: { id: placeholder.versionId },
+    });
+    expect(retiredPlaceholder.status).toBe("RETIRED");
+    expect(retiredPlaceholder.isActive).toBe(false);
+
+    await cleanupSlug(otherSlug);
+  });
+
+  it("retire() remove definitivamente uma versão APPROVED de circulação", async () => {
+    const draft = await service.submitDraft({
+      slug,
+      clinicalGoal: "HABIT",
+      title: "Hábito (teste)",
+      content: testContent("hábito"),
+    });
+    await service.approve(draft.versionId, "fundadora-teste@lexpsique.pt");
+
+    await service.retire(draft.versionId);
+
+    const result = await service.matchGoal("HABIT");
+    expect(result.matched).toBe(false);
+
+    const retired = await prisma.templateVersion.findUniqueOrThrow({ where: { id: draft.versionId } });
+    expect(retired.status).toBe("RETIRED");
+    expect(retired.isActive).toBe(false);
+
+    await expect(service.retire(draft.versionId)).rejects.toThrow();
+  });
 });

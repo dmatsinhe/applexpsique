@@ -127,9 +127,16 @@ export async function createDraftVersion(params: {
 }
 
 /**
- * Aprova uma versão DRAFT e torna-a a única versão ativa do template,
- * desativando qualquer versão anteriormente ativa — numa transação, para
- * nunca haver uma janela com zero ou múltiplas versões ativas.
+ * Aprova uma versão DRAFT e torna-a a única versão ativa e servível para o
+ * seu objetivo clínico — numa transação, para nunca haver uma janela com
+ * zero ou múltiplas versões ativas. Isto cobre dois casos distintos:
+ *
+ * 1. Uma nova versão do MESMO template (mesmo slug) substitui a anterior —
+ *    a anterior fica isActive=false mas mantém status=APPROVED (histórico).
+ * 2. Um template DIFERENTE (slug diferente) para o MESMO objetivo clínico
+ *    assume o lugar — o anterior é explicitamente RETIRED, porque
+ *    `findActiveApprovedVersionForGoal` só reconhece um objetivo por
+ *    template e nunca deve devolver dois candidatos para o mesmo objetivo.
  */
 export async function approveVersion(params: {
   versionId: string;
@@ -138,6 +145,7 @@ export async function approveVersion(params: {
   await prisma.$transaction(async (tx) => {
     const version = await tx.templateVersion.findUniqueOrThrow({
       where: { id: params.versionId },
+      include: { template: true },
     });
 
     if (version.status !== "DRAFT") {
@@ -151,6 +159,16 @@ export async function approveVersion(params: {
       data: { isActive: false },
     });
 
+    await tx.templateVersion.updateMany({
+      where: {
+        templateId: { not: version.templateId },
+        isActive: true,
+        status: "APPROVED",
+        template: { clinicalGoal: version.template.clinicalGoal },
+      },
+      data: { isActive: false, status: "RETIRED" },
+    });
+
     await tx.templateVersion.update({
       where: { id: params.versionId },
       data: {
@@ -160,5 +178,24 @@ export async function approveVersion(params: {
         approvedAt: new Date(),
       },
     });
+  });
+}
+
+/**
+ * Retira definitivamente uma versão APPROVED de circulação (ex.: um
+ * template de demonstração/placeholder que nunca devia voltar a ser
+ * servido). Nunca apaga a linha — mantém-se como registo histórico com
+ * status RETIRED, apenas deixa de ser candidata a `isActive`.
+ */
+export async function retireVersion(versionId: string): Promise<void> {
+  const version = await prisma.templateVersion.findUniqueOrThrow({ where: { id: versionId } });
+
+  if (version.status !== "APPROVED") {
+    throw new Error(`Só é possível retirar versões APPROVED (versão atual: ${version.status})`);
+  }
+
+  await prisma.templateVersion.update({
+    where: { id: versionId },
+    data: { status: "RETIRED", isActive: false },
   });
 }
