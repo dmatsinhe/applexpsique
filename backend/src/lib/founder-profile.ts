@@ -4,10 +4,7 @@
  * mostrado em respostas de crise (secção 5).
  *
  * Conteúdo verificado a partir do CV e certificados fornecidos pela
- * fundadora (maio de 2023 / outubro de 2023). `licenseNumber` fica
- * deliberadamente por preencher — não foi fornecido nenhum número de
- * cédula profissional (ex: Ordem dos Psicólogos) nos documentos recebidos,
- * e este campo nunca deve ser inventado.
+ * fundadora (maio de 2023 / outubro de 2023).
  */
 export const FOUNDER_PROFILE = {
   name: "Dália Matsinhe",
@@ -18,9 +15,7 @@ export const FOUNDER_PROFILE = {
     "Psicóloga (Mestre em Psicologia Social e das Organizações, ISCTE) " +
     "e Hipnoterapeuta Certificada em RTT® (Rapid Transformational Therapy®)",
 
-  // Nº de cédula profissional (ex: Ordem dos Psicólogos Portugueses) — a
-  // preencher pela fundadora quando disponível. Nunca inventar este valor.
-  licenseNumber: "[Número de cédula profissional — a preencher]",
+  licenseNumber: "APA — American Psychological Association, nº de membro 01504942",
 
   methodology: ["TCC", "PNL", "Hipnose Clínica", "RTT"] as const,
 

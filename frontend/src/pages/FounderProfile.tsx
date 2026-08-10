@@ -37,9 +37,7 @@ export function FounderProfile({ onBack }: Props) {
           <h1>{profile.name}</h1>
           <p className="explainer">{profile.credentials}</p>
 
-          {!profile.licenseNumber.startsWith("[") && (
-            <p className="explainer">Cédula profissional: {profile.licenseNumber}</p>
-          )}
+          <p className="explainer">Registo profissional: {profile.licenseNumber}</p>
 
           <h2>Metodologia</h2>
           <p>{profile.methodology.join(" · ")}</p>
