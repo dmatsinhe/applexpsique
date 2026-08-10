@@ -134,6 +134,12 @@ export const api = {
       experienceSummary: string;
       howItWorks: string;
     }>("/founder"),
+
+  exportAccountData: () => request<Record<string, unknown>>("/account/export"),
+
+  deleteAccountHistory: () => request<void>("/account/history", { method: "DELETE" }),
+
+  deleteAccount: () => request<void>("/account", { method: "DELETE" }),
 };
 
 export { ApiError };

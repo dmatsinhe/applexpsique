@@ -7,6 +7,7 @@ import { NoTemplateAvailable } from "./pages/NoTemplateAvailable.js";
 import { Personalize } from "./pages/Personalize.js";
 import { SessionResult } from "./pages/SessionResult.js";
 import { FounderProfile } from "./pages/FounderProfile.js";
+import { Account } from "./pages/Account.js";
 
 type Step =
   | { name: "age-gate" }
@@ -27,9 +28,12 @@ type Step =
       };
     };
 
+type Overlay = "none" | "founder-profile" | "account";
+
 export function App() {
   const [step, setStep] = useState<Step>({ name: "age-gate" });
-  const [showFounderProfile, setShowFounderProfile] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [overlay, setOverlay] = useState<Overlay>("none");
 
   function handleOutcome(outcome: CheckInOutcome) {
     switch (outcome.kind) {
@@ -52,10 +56,25 @@ export function App() {
     setStep({ name: "checkin" });
   }
 
-  if (showFounderProfile) {
+  function handleAccountDeleted() {
+    setAuthToken(null);
+    setIsAuthenticated(false);
+    setOverlay("none");
+    setStep({ name: "age-gate" });
+  }
+
+  if (overlay === "founder-profile") {
     return (
       <main className="app">
-        <FounderProfile onBack={() => setShowFounderProfile(false)} />
+        <FounderProfile onBack={() => setOverlay("none")} />
+      </main>
+    );
+  }
+
+  if (overlay === "account") {
+    return (
+      <main className="app">
+        <Account onBack={() => setOverlay("none")} onAccountDeleted={handleAccountDeleted} />
       </main>
     );
   }
@@ -63,7 +82,12 @@ export function App() {
   return (
     <main className="app">
       <nav className="top-nav">
-        <button type="button" className="link-button" onClick={() => setShowFounderProfile(true)}>
+        {isAuthenticated && (
+          <button type="button" className="link-button" onClick={() => setOverlay("account")}>
+            A minha conta
+          </button>
+        )}
+        <button type="button" className="link-button" onClick={() => setOverlay("founder-profile")}>
           Sobre a fundadora · Como isto funciona
         </button>
       </nav>
@@ -72,6 +96,7 @@ export function App() {
         <AgeGate
           onRegistered={(token) => {
             setAuthToken(token);
+            setIsAuthenticated(true);
             setStep({ name: "checkin" });
           }}
         />

@@ -6,6 +6,7 @@ import checkinRoutes from "./routes/checkin.routes.js";
 import sessionsRoutes from "./routes/sessions.routes.js";
 import templatesRoutes from "./routes/templates.routes.js";
 import founderRoutes from "./routes/founder.routes.js";
+import accountRoutes from "./routes/account.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -20,6 +21,7 @@ export function createApp() {
   app.use("/sessions", sessionsRoutes);
   app.use("/admin/templates", templatesRoutes);
   app.use("/founder", founderRoutes);
+  app.use("/account", accountRoutes);
 
   app.use(errorHandler);
 

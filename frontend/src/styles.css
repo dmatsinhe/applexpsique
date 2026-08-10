@@ -137,6 +137,7 @@ button.secondary {
 .top-nav {
   display: flex;
   justify-content: flex-end;
+  gap: 1.25rem;
   margin-bottom: 1rem;
 }
 

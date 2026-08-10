@@ -24,6 +24,11 @@ classificador de crise atual é um ponto de partida de engenharia, não uma
 validação clínica, e os templates seed são placeholders de desenvolvimento
 explicitamente não aprovados.
 
+O utilizador pode exportar ou apagar os próprios dados a qualquer momento
+(secção 8), sem pedir a ninguém — ecrã "A minha conta", visível depois de
+autenticado, ou diretamente via `GET /account/export`, `DELETE
+/account/history` e `DELETE /account`.
+
 ## Estrutura
 
 - `backend/` — API Node.js + TypeScript + Express + Prisma/PostgreSQL.

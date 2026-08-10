@@ -164,4 +164,51 @@ describe("API E2E — fluxo MVP passo 1 (registo → check-in → sessão)", () 
     const res = await request(app).post("/checkin").send({});
     expect(res.status).toBe(401);
   });
+
+  it("autoatendimento de dados: exportar, apagar histórico, apagar conta (secção 8)", async () => {
+    const accountEmail = `e2e-account-${Date.now()}@lexpsique.pt`;
+    const registerRes = await request(app)
+      .post("/auth/register")
+      .send({ email: accountEmail, password: "password123", birthDate: "1990-05-15" });
+    const token = registerRes.body.token as string;
+
+    await request(app)
+      .post("/checkin")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        requestedGoal: "GENERALIZED_ANXIETY",
+        recentFeelingText: "Sem sinais de crise, só ansiedade normal do dia a dia.",
+        energyLevel: 3,
+      });
+
+    const exportRes = await request(app).get("/account/export").set("Authorization", `Bearer ${token}`);
+    expect(exportRes.status).toBe(200);
+    expect(exportRes.body.account.email).toBe(accountEmail);
+    expect(exportRes.body.checkIns).toHaveLength(1);
+
+    const deleteHistoryRes = await request(app)
+      .delete("/account/history")
+      .set("Authorization", `Bearer ${token}`);
+    expect(deleteHistoryRes.status).toBe(204);
+
+    const exportAfterHistoryDelete = await request(app)
+      .get("/account/export")
+      .set("Authorization", `Bearer ${token}`);
+    expect(exportAfterHistoryDelete.body.checkIns).toHaveLength(0);
+
+    const deleteAccountRes = await request(app).delete("/account").set("Authorization", `Bearer ${token}`);
+    expect(deleteAccountRes.status).toBe(204);
+
+    // A conta já não existe — o mesmo token deixa de servir para nada.
+    const loginAfterDelete = await request(app)
+      .post("/auth/login")
+      .send({ email: accountEmail, password: "password123" });
+    expect(loginAfterDelete.status).toBe(401);
+  });
+
+  it("rejeita exportar/apagar dados sem autenticação", async () => {
+    expect((await request(app).get("/account/export")).status).toBe(401);
+    expect((await request(app).delete("/account/history")).status).toBe(401);
+    expect((await request(app).delete("/account")).status).toBe(401);
+  });
 });
