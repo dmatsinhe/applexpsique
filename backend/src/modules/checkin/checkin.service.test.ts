@@ -62,6 +62,7 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
   const anxietySlug = "teste-checkin-ansiedade";
   const selfEsteemSlug = "teste-checkin-autoestima";
   const griefSlug = "teste-checkin-luto";
+  const painSlug = "teste-checkin-dor";
 
   beforeAll(async () => {
     const user = await prisma.user.create({
@@ -77,6 +78,7 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     await cleanupSlug(anxietySlug);
     await cleanupSlug(selfEsteemSlug);
     await cleanupSlug(griefSlug);
+    await cleanupSlug(painSlug);
   });
 
   afterAll(async () => {
@@ -84,6 +86,7 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     await cleanupSlug(anxietySlug);
     await cleanupSlug(selfEsteemSlug);
     await cleanupSlug(griefSlug);
+    await cleanupSlug(painSlug);
     await prisma.checkIn.deleteMany({ where: { userId } });
     await prisma.user.delete({ where: { id: userId } });
     await prisma.$disconnect();
@@ -176,12 +179,28 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
   });
 
   it("recusa explicitamente quando não há template aprovado para o objetivo (sem crise)", async () => {
+    // Objetivos reais vão ganhando templates aprovados ao longo do tempo
+    // (inclusive no ambiente local, por verificação manual) — para este
+    // teste garantir mesmo a premissa "sem template", retira-se aqui
+    // qualquer versão ativa que já exista para o objetivo escolhido, em
+    // vez de depender de um objetivo que "por acaso" ainda não tem nada.
+    const goal: ClinicalGoal = "HABIT_NAIL_BITING";
+    const existing = await prisma.templateVersion.findFirst({
+      where: { status: "APPROVED", isActive: true, template: { clinicalGoal: goal } },
+    });
+    if (existing) {
+      await templateService.retire(existing.id);
+    }
+
     const outcome = await checkInService.submit(
-      baseSubmission({ requestedGoal: "GRIEF", recentFeelingText: "Sinto-me triste, mas sem sinais de crise." }),
+      baseSubmission({
+        requestedGoal: goal,
+        recentFeelingText: "Sinto-me triste, mas sem sinais de crise.",
+      }),
     );
     expect(outcome.kind).toBe("no_template_available");
     if (outcome.kind === "no_template_available") {
-      expect(outcome.availableGoals).not.toContain("GRIEF");
+      expect(outcome.availableGoals).not.toContain(goal);
     }
   });
 
@@ -262,6 +281,24 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
 
     const matched = await checkInService.submit(
       baseSubmission({ requestedGoal: "GRIEF", contraindicationSelfReport: false }),
+    );
+    expect(matched.kind).toBe("matched");
+  });
+
+  it("Dor tem a sua própria pergunta/mensagem de contraindicação, incluindo instrução para ligar ao 112", async () => {
+    await approveTemplateForGoal(painSlug, "PAIN");
+
+    const flagged = await checkInService.submit(
+      baseSubmission({ requestedGoal: "PAIN", contraindicationSelfReport: true }),
+    );
+    expect(flagged.kind).toBe("contraindication_flagged");
+    if (flagged.kind === "contraindication_flagged") {
+      expect(flagged.message).toContain("112");
+      expect(flagged.message).not.toContain("desorganização grave");
+    }
+
+    const matched = await checkInService.submit(
+      baseSubmission({ requestedGoal: "PAIN", contraindicationSelfReport: false }),
     );
     expect(matched.kind).toBe("matched");
   });

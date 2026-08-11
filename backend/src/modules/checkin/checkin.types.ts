@@ -119,6 +119,23 @@ export const CONTRAINDICATION_SCREENING: Partial<Record<ClinicalGoal, Contraindi
       "profissional imediata, não um exercício autoguiado. Os recursos abaixo podem ajudar a " +
       "encontrar o apoio profissional adequado.",
   },
+  PAIN: {
+    question:
+      "Esta dor ainda não foi avaliada por um profissional de saúde, ou tens neste momento dor " +
+      "súbita muito intensa/diferente do habitual, ou sinais como falta de ar, dor no peito, " +
+      "desmaio, febre, fraqueza súbita, alteração da fala, perda de sensibilidade, um traumatismo " +
+      "recente, ou perda de controlo da bexiga ou intestino?",
+    // Ao contrário dos outros guiões, isto pode ser uma emergência médica, não uma crise
+    // psicológica — a mensagem instrui a ligar ao 112 diretamente, em vez de só apontar para o
+    // pacote genérico de recursos de crise (que continua incluído, com o 112 lá dentro também).
+    message:
+      "Este exercício não fica disponível agora. Se tens dor súbita, muito intensa, diferente do " +
+      "que é habitual para ti, ou sinais como falta de ar, dor no peito, desmaio, febre, fraqueza " +
+      "súbita, alteração da fala, perda de sensibilidade, um traumatismo recente, ou perda de " +
+      "controlo da bexiga ou intestino — isto pode ser uma emergência médica. Liga imediatamente " +
+      "ao 112 ou dirige-te a um serviço de urgência. Se a tua dor ainda não foi avaliada por um " +
+      "profissional de saúde, marca uma consulta antes de usar este exercício.",
+  },
   ...habitContraindicationEntries(),
 };
 

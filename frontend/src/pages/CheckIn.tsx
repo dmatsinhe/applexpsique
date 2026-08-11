@@ -21,6 +21,11 @@ const CONTRAINDICATION_SCREENING_QUESTIONS: Partial<Record<ClinicalGoal, string>
   GRIEF:
     "Sente-se atualmente incapaz de garantir a sua própria segurança, está a viver sintomas de " +
     "psicose, ou sente-se gravemente desorganizado(a) neste momento?",
+  PAIN:
+    "Esta dor ainda não foi avaliada por um profissional de saúde, ou tens neste momento dor " +
+    "súbita muito intensa/diferente do habitual, ou sinais como falta de ar, dor no peito, " +
+    "desmaio, febre, fraqueza súbita, alteração da fala, perda de sensibilidade, um traumatismo " +
+    "recente, ou perda de controlo da bexiga ou intestino?",
   HABIT_PHONE_OVERUSE: HABIT_CONTRAINDICATION_QUESTION,
   HABIT_PROCRASTINATION: HABIT_CONTRAINDICATION_QUESTION,
   HABIT_NAIL_BITING: HABIT_CONTRAINDICATION_QUESTION,
