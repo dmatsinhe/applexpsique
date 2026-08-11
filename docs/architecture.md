@@ -1,4 +1,4 @@
-# Arquitetura — Lexpsique
+# Arquitetura — CuidaMente
 
 ## Princípio orientador
 

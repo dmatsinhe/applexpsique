@@ -36,7 +36,7 @@ export function Account({ onBack, onAccountDeleted }: Props) {
     setError(null);
     try {
       const data = await api.exportAccountData();
-      downloadJson(data, "lexpsique-dados.json");
+      downloadJson(data, "cuidamente-dados.json");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível exportar os dados.");
     } finally {

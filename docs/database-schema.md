@@ -1,4 +1,4 @@
-# Esquema de base de dados — Lexpsique
+# Esquema de base de dados — CuidaMente
 
 Fonte de verdade: `backend/prisma/schema.prisma`. Este documento explica o
 "porquê" de cada decisão de modelação, ligada a um requisito concreto do

@@ -17,7 +17,7 @@ router.get(
   "/export",
   asyncRoute(async (req, res) => {
     const data = await accountService.exportData(req.userId!);
-    res.setHeader("Content-Disposition", 'attachment; filename="lexpsique-dados.json"');
+    res.setHeader("Content-Disposition", 'attachment; filename="cuidamente-dados.json"');
     res.json(data);
   }),
 );

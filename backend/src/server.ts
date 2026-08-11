@@ -33,6 +33,6 @@ export function createApp() {
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
   const app = createApp();
   app.listen(env.port, () => {
-    console.log(`Lexpsique backend a correr na porta ${env.port}`);
+    console.log(`CuidaMente backend a correr na porta ${env.port}`);
   });
 }

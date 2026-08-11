@@ -8,9 +8,9 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
-        name: "Lexpsique",
-        short_name: "Lexpsique",
-        description: "Hipnose clínica e apoio psicológico — Lexpsique, Lda.",
+        name: "CuidaMente",
+        short_name: "CuidaMente",
+        description: "Hipnose clínica e apoio psicológico — uma aplicação LexPsique, Lda.",
         lang: "pt-PT",
         theme_color: "#1f2937",
         background_color: "#ffffff",

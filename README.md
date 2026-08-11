@@ -1,6 +1,6 @@
-# Lexpsique
+# CuidaMente
 
-Aplicação de hipnose clínica e apoio psicológico da Lexpsique, Lda. Ver
+Aplicação de hipnose clínica e apoio psicológico, uma aplicação LexPsique, Lda. Ver
 `docs/architecture.md` e `docs/database-schema.md` para a arquitetura
 completa, e `docs/crisis-detection.md` para o estado e limites do
 classificador de crise.

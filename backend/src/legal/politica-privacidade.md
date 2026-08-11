@@ -1,6 +1,6 @@
 # Política de Privacidade e Proteção de Dados
 
-**Aplicação:** Lexpsique
+**Aplicação:** CuidaMente, uma aplicação LexPsique, Lda.
 **Versão:** 1.0
 **Data de entrada em vigor:** [a preencher quando publicada]
 
@@ -27,7 +27,7 @@ desta aplicação, em conformidade com:
 
 O responsável pelo tratamento é:
 
-- **Entidade:** Lexpsique, Lda.
+- **Entidade:** LexPsique, Lda.
 - **NIPC/NIF:** [a preencher]
 - **Sede ou domicílio profissional:** [a preencher]
 - **E-mail de privacidade:** lexpsique@gmail.com
@@ -336,5 +336,5 @@ serão comunicadas através da aplicação.
 
 ## 18. Contactos
 
-**Responsável pelo tratamento:** Lexpsique, Lda.
+**Responsável pelo tratamento:** LexPsique, Lda.
 **E-mail:** lexpsique@gmail.com

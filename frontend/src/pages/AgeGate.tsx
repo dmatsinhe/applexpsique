@@ -34,7 +34,7 @@ export function AgeGate({ onRegistered }: Props) {
 
   return (
     <div className="screen">
-      <h1>Criar conta — Lexpsique</h1>
+      <h1>Criar conta — CuidaMente</h1>
       <p className="explainer">
         Esta aplicação é exclusiva para adultos (18+). Precisamos da sua data
         de nascimento para confirmar isso — não guardamos a data em si, só a
