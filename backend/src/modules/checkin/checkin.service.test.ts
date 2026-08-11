@@ -60,6 +60,7 @@ async function cleanupSlug(slug: string) {
 describe("CheckInService — fluxo completo (integração com Postgres real)", () => {
   const sleepSlug = "teste-checkin-sono";
   const anxietySlug = "teste-checkin-ansiedade";
+  const selfEsteemSlug = "teste-checkin-autoestima";
 
   beforeAll(async () => {
     const user = await prisma.user.create({
@@ -73,11 +74,13 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     userId = user.id;
     await cleanupSlug(sleepSlug);
     await cleanupSlug(anxietySlug);
+    await cleanupSlug(selfEsteemSlug);
   });
 
   afterAll(async () => {
     await cleanupSlug(sleepSlug);
     await cleanupSlug(anxietySlug);
+    await cleanupSlug(selfEsteemSlug);
     await prisma.checkIn.deleteMany({ where: { userId } });
     await prisma.user.delete({ where: { id: userId } });
     await prisma.$disconnect();
@@ -222,5 +225,23 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
       baseSubmission({ requestedGoal: "SLEEP", contraindicationSelfReport: true }),
     );
     expect(outcome.kind).toBe("matched");
+  });
+
+  it("Autoestima tem a sua própria pergunta/mensagem de contraindicação, distinta de Ansiedade", async () => {
+    await approveTemplateForGoal(selfEsteemSlug, "SELF_ESTEEM");
+
+    const flagged = await checkInService.submit(
+      baseSubmission({ requestedGoal: "SELF_ESTEEM", contraindicationSelfReport: true }),
+    );
+    expect(flagged.kind).toBe("contraindication_flagged");
+    if (flagged.kind === "contraindication_flagged") {
+      expect(flagged.message).toContain("perturbação alimentar");
+      expect(flagged.message).not.toContain("mania");
+    }
+
+    const matched = await checkInService.submit(
+      baseSubmission({ requestedGoal: "SELF_ESTEEM", contraindicationSelfReport: false }),
+    );
+    expect(matched.kind).toBe("matched");
   });
 });

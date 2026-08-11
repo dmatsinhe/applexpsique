@@ -2,12 +2,19 @@ import { useState } from "react";
 import { api, ApiError, type CheckInOutcome, type ClinicalGoal } from "../api/client.js";
 
 /**
- * Objetivos cujo guião clínico exige triagem prévia que a app não pode
+ * Objetivos cujo guião clínico real exige triagem prévia que a app não pode
  * fazer (sem profissional no circuito) — substituída por esta pergunta de
- * autorrelato direto. Tem de espelhar
- * GOALS_REQUIRING_CONTRAINDICATION_SCREENING no backend.
+ * autorrelato direto, própria de cada objetivo. Tem de espelhar
+ * CONTRAINDICATION_SCREENING no backend (checkin.types.ts).
  */
-const GOALS_REQUIRING_CONTRAINDICATION_SCREENING: ClinicalGoal[] = ["GENERALIZED_ANXIETY"];
+const CONTRAINDICATION_SCREENING_QUESTIONS: Partial<Record<ClinicalGoal, string>> = {
+  GENERALIZED_ANXIETY:
+    "Alguma vez foi diagnosticado(a) com mania, psicose ou perturbação dissociativa, ou está " +
+    "atualmente numa crise que exige apoio imediato?",
+  SELF_ESTEEM:
+    "Está atualmente a viver violência, uma perturbação alimentar, depressão grave, ou um trauma " +
+    "não resolvido/descompensado?",
+};
 
 interface Props {
   onOutcome: (outcome: CheckInOutcome) => void;
@@ -39,8 +46,8 @@ export function CheckIn({ onOutcome }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const needsContraindicationScreening =
-    GOALS_REQUIRING_CONTRAINDICATION_SCREENING.includes(requestedGoal);
+  const contraindicationQuestion = CONTRAINDICATION_SCREENING_QUESTIONS[requestedGoal];
+  const needsContraindicationScreening = contraindicationQuestion !== undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,10 +94,7 @@ export function CheckIn({ onOutcome }: Props) {
         </label>
         {needsContraindicationScreening && (
           <fieldset>
-            <legend>
-              Alguma vez foi diagnosticado(a) com mania, psicose ou perturbação dissociativa, ou
-              está atualmente numa crise que exige apoio imediato?
-            </legend>
+            <legend>{contraindicationQuestion}</legend>
             <label>
               <input
                 type="radio"

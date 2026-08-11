@@ -9,17 +9,11 @@ import {
   updateCrisisLevel,
 } from "./checkin.repository.js";
 import {
+  CONTRAINDICATION_SCREENING,
   freeTextAnswers,
-  GOALS_REQUIRING_CONTRAINDICATION_SCREENING,
   type CheckInOutcome,
   type CheckInSubmission,
 } from "./checkin.types.js";
-
-const CONTRAINDICATION_FLAGGED_MESSAGE =
-  "Este exercício de hipnose autoguiada não é recomendado para quem tem diagnóstico de mania, " +
-  "psicose ou perturbação dissociativa, ou está a viver uma crise que exige apoio imediato. " +
-  "Por isso não fica disponível agora. Os recursos abaixo podem ajudar a encontrar o apoio " +
-  "profissional adequado.";
 
 export class CheckInService {
   constructor(
@@ -79,16 +73,14 @@ export class CheckInService {
 
     const { id } = await createCheckIn({ submission, crisisSignalLevel: "ABSENT" });
 
-    if (
-      GOALS_REQUIRING_CONTRAINDICATION_SCREENING.includes(submission.requestedGoal) &&
-      submission.contraindicationSelfReport
-    ) {
+    const screening = CONTRAINDICATION_SCREENING[submission.requestedGoal];
+    if (screening && submission.contraindicationSelfReport) {
       await recordMatch({ checkInId: id, templateVersionId: null, refusedNoTemplateAvailable: false });
       return {
         kind: "contraindication_flagged",
         checkInId: id,
         response: getCrisisResponseBundleForLocale(submission.locale),
-        message: CONTRAINDICATION_FLAGGED_MESSAGE,
+        message: screening.message,
       };
     }
 

@@ -71,14 +71,49 @@ export type CheckInOutcome =
       paceOptions: string[];
     };
 
+export interface ContraindicationScreening {
+  /** Pergunta de autorrelato mostrada no check-in para este objetivo. */
+  question: string;
+  /** Mensagem mostrada quando a pessoa reporta a contraindicação. */
+  message: string;
+}
+
 /**
- * Objetivos cujo guião clínico pressupõe triagem prévia por um profissional
- * (mania, psicose, dissociação, etc.) que a app não tem meios de fazer —
- * substituída por autorrelato direto no check-in (secção 1, revisão de
- * Ansiedade generalizada). Nunca crescer esta lista silenciosamente: só
- * quando o guião real de um objetivo o exigir explicitamente.
+ * Objetivos cujo guião clínico real pressupõe triagem prévia por um
+ * profissional (mania, psicose, perturbação alimentar, trauma
+ * descompensado, etc.) que a app não tem meios de fazer — substituída por
+ * autorrelato direto no check-in. Cada objetivo tem a sua própria pergunta
+ * e mensagem, porque as contraindicações de cada guião são diferentes.
+ * Nunca crescer este mapa silenciosamente: só quando o guião real de um
+ * objetivo o exigir explicitamente. Tem de espelhar o mapa equivalente em
+ * frontend/src/pages/CheckIn.tsx.
  */
-export const GOALS_REQUIRING_CONTRAINDICATION_SCREENING: ClinicalGoal[] = ["GENERALIZED_ANXIETY"];
+export const CONTRAINDICATION_SCREENING: Partial<Record<ClinicalGoal, ContraindicationScreening>> = {
+  GENERALIZED_ANXIETY: {
+    question:
+      "Alguma vez foi diagnosticado(a) com mania, psicose ou perturbação dissociativa, ou está " +
+      "atualmente numa crise que exige apoio imediato?",
+    message:
+      "Este exercício de hipnose autoguiada não é recomendado para quem tem diagnóstico de mania, " +
+      "psicose ou perturbação dissociativa, ou está a viver uma crise que exige apoio imediato. " +
+      "Por isso não fica disponível agora. Os recursos abaixo podem ajudar a encontrar o apoio " +
+      "profissional adequado.",
+  },
+  SELF_ESTEEM: {
+    question:
+      "Está atualmente a viver violência, uma perturbação alimentar, depressão grave, ou um trauma " +
+      "não resolvido/descompensado?",
+    message:
+      "Este exercício de autoestima não fica disponível enquanto houver violência atual, uma " +
+      "perturbação alimentar, depressão grave ou trauma descompensado — estas situações exigem " +
+      "avaliação e intervenção profissional, não um exercício autoguiado. Os recursos abaixo podem " +
+      "ajudar a encontrar o apoio profissional adequado.",
+  },
+};
+
+export const GOALS_REQUIRING_CONTRAINDICATION_SCREENING: ClinicalGoal[] = Object.keys(
+  CONTRAINDICATION_SCREENING,
+) as ClinicalGoal[];
 
 export function freeTextAnswers(submission: CheckInSubmission): string[] {
   return [
