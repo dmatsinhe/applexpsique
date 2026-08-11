@@ -109,6 +109,16 @@ export const CONTRAINDICATION_SCREENING: Partial<Record<ClinicalGoal, Contraindi
       "avaliação e intervenção profissional, não um exercício autoguiado. Os recursos abaixo podem " +
       "ajudar a encontrar o apoio profissional adequado.",
   },
+  GRIEF: {
+    question:
+      "Sente-se atualmente incapaz de garantir a sua própria segurança, está a viver sintomas de " +
+      "psicose, ou sente-se gravemente desorganizado(a) neste momento?",
+    message:
+      "Este exercício não fica disponível neste momento — quando há incapacidade de garantir a " +
+      "segurança, psicose ou desorganização grave, é necessária avaliação e intervenção " +
+      "profissional imediata, não um exercício autoguiado. Os recursos abaixo podem ajudar a " +
+      "encontrar o apoio profissional adequado.",
+  },
   ...habitContraindicationEntries(),
 };
 

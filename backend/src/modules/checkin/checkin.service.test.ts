@@ -61,6 +61,7 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
   const sleepSlug = "teste-checkin-sono";
   const anxietySlug = "teste-checkin-ansiedade";
   const selfEsteemSlug = "teste-checkin-autoestima";
+  const griefSlug = "teste-checkin-luto";
 
   beforeAll(async () => {
     const user = await prisma.user.create({
@@ -75,12 +76,14 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     await cleanupSlug(sleepSlug);
     await cleanupSlug(anxietySlug);
     await cleanupSlug(selfEsteemSlug);
+    await cleanupSlug(griefSlug);
   });
 
   afterAll(async () => {
     await cleanupSlug(sleepSlug);
     await cleanupSlug(anxietySlug);
     await cleanupSlug(selfEsteemSlug);
+    await cleanupSlug(griefSlug);
     await prisma.checkIn.deleteMany({ where: { userId } });
     await prisma.user.delete({ where: { id: userId } });
     await prisma.$disconnect();
@@ -241,6 +244,24 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
 
     const matched = await checkInService.submit(
       baseSubmission({ requestedGoal: "SELF_ESTEEM", contraindicationSelfReport: false }),
+    );
+    expect(matched.kind).toBe("matched");
+  });
+
+  it("Luto tem a sua própria pergunta/mensagem de contraindicação, distinta das outras", async () => {
+    await approveTemplateForGoal(griefSlug, "GRIEF");
+
+    const flagged = await checkInService.submit(
+      baseSubmission({ requestedGoal: "GRIEF", contraindicationSelfReport: true }),
+    );
+    expect(flagged.kind).toBe("contraindication_flagged");
+    if (flagged.kind === "contraindication_flagged") {
+      expect(flagged.message).toContain("desorganização grave");
+      expect(flagged.message).not.toContain("perturbação alimentar");
+    }
+
+    const matched = await checkInService.submit(
+      baseSubmission({ requestedGoal: "GRIEF", contraindicationSelfReport: false }),
     );
     expect(matched.kind).toBe("matched");
   });

@@ -18,6 +18,9 @@ const CONTRAINDICATION_SCREENING_QUESTIONS: Partial<Record<ClinicalGoal, string>
   SELF_ESTEEM:
     "Está atualmente a viver violência, uma perturbação alimentar, depressão grave, ou um trauma " +
     "não resolvido/descompensado?",
+  GRIEF:
+    "Sente-se atualmente incapaz de garantir a sua própria segurança, está a viver sintomas de " +
+    "psicose, ou sente-se gravemente desorganizado(a) neste momento?",
   HABIT_PHONE_OVERUSE: HABIT_CONTRAINDICATION_QUESTION,
   HABIT_PROCRASTINATION: HABIT_CONTRAINDICATION_QUESTION,
   HABIT_NAIL_BITING: HABIT_CONTRAINDICATION_QUESTION,
