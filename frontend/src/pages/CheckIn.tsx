@@ -7,6 +7,10 @@ import { api, ApiError, type CheckInOutcome, type ClinicalGoal } from "../api/cl
  * autorrelato direto, própria de cada objetivo. Tem de espelhar
  * CONTRAINDICATION_SCREENING no backend (checkin.types.ts).
  */
+const HABIT_CONTRAINDICATION_QUESTION =
+  "Este comportamento envolve consumo de álcool ou drogas, jogo, autolesão, uma perturbação " +
+  "alimentar, ou compulsão sexual?";
+
 const CONTRAINDICATION_SCREENING_QUESTIONS: Partial<Record<ClinicalGoal, string>> = {
   GENERALIZED_ANXIETY:
     "Alguma vez foi diagnosticado(a) com mania, psicose ou perturbação dissociativa, ou está " +
@@ -14,6 +18,13 @@ const CONTRAINDICATION_SCREENING_QUESTIONS: Partial<Record<ClinicalGoal, string>
   SELF_ESTEEM:
     "Está atualmente a viver violência, uma perturbação alimentar, depressão grave, ou um trauma " +
     "não resolvido/descompensado?",
+  HABIT_PHONE_OVERUSE: HABIT_CONTRAINDICATION_QUESTION,
+  HABIT_PROCRASTINATION: HABIT_CONTRAINDICATION_QUESTION,
+  HABIT_NAIL_BITING: HABIT_CONTRAINDICATION_QUESTION,
+  HABIT_MINDLESS_SNACKING: HABIT_CONTRAINDICATION_QUESTION,
+  HABIT_NOTIFICATION_CHECKING: HABIT_CONTRAINDICATION_QUESTION,
+  HABIT_SEDENTARY_AVOIDANCE: HABIT_CONTRAINDICATION_QUESTION,
+  HABIT_BEDTIME_PROCRASTINATION: HABIT_CONTRAINDICATION_QUESTION,
 };
 
 interface Props {
@@ -25,7 +36,13 @@ const GOAL_LABELS: Record<ClinicalGoal, string> = {
   GENERALIZED_ANXIETY: "Ansiedade generalizada",
   FOCUS: "Foco",
   SELF_ESTEEM: "Autoestima",
-  HABIT: "Hábito",
+  HABIT_PHONE_OVERUSE: "Hábito — uso excessivo do telemóvel",
+  HABIT_PROCRASTINATION: "Hábito — procrastinação",
+  HABIT_NAIL_BITING: "Hábito — roer as unhas",
+  HABIT_MINDLESS_SNACKING: "Hábito — consumo automático de alimentos",
+  HABIT_NOTIFICATION_CHECKING: "Hábito — verificação compulsiva de notificações",
+  HABIT_SEDENTARY_AVOIDANCE: "Hábito — evitar exercício físico",
+  HABIT_BEDTIME_PROCRASTINATION: "Hábito — adiar a hora de deitar",
   PAIN: "Dor",
   GRIEF: "Luto",
 };

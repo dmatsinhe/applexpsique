@@ -1,9 +1,24 @@
+/**
+ * O guião real de "Hábito" exige preencher sinal/resultado/resposta
+ * alternativa específicos de cada hábito (secção 1: "o terapeuta deve
+ * preencher o hábito, o sinal e a alternativa antes de gerar o áudio") —
+ * não é um texto genérico. Por isso não existe um objetivo "HABIT" único;
+ * cada hábito comum é o seu próprio objetivo selecionável, cada um com o
+ * seu template fixo e integralmente escrito pela fundadora. Novos hábitos
+ * podem ser adicionados aqui à medida que forem escritos e aprovados.
+ */
 export const CLINICAL_GOALS = [
   "SLEEP",
   "GENERALIZED_ANXIETY",
   "FOCUS",
   "SELF_ESTEEM",
-  "HABIT",
+  "HABIT_PHONE_OVERUSE",
+  "HABIT_PROCRASTINATION",
+  "HABIT_NAIL_BITING",
+  "HABIT_MINDLESS_SNACKING",
+  "HABIT_NOTIFICATION_CHECKING",
+  "HABIT_SEDENTARY_AVOIDANCE",
+  "HABIT_BEDTIME_PROCRASTINATION",
   "PAIN",
   "GRIEF",
 ] as const;

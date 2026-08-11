@@ -30,7 +30,7 @@ async function cleanupSlug(slug: string) {
 }
 
 describe("TemplateService — ciclo de aprovação (integração com Postgres real)", () => {
-  const slug = "teste-habito-integracao";
+  const slug = "teste-pain-integracao";
 
   beforeEach(async () => {
     await cleanupSlug(slug);
@@ -42,29 +42,29 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
   });
 
   it("recusa explicitamente quando não existe versão aprovada para o objetivo", async () => {
-    const result = await service.matchGoal("HABIT");
+    const result = await service.matchGoal("PAIN");
     expect(result.matched).toBe(false);
     if (!result.matched) {
-      expect(result.availableGoals).not.toContain("HABIT");
+      expect(result.availableGoals).not.toContain("PAIN");
     }
   });
 
   it("uma versão DRAFT nunca é servível, mesmo depois de criada", async () => {
     await service.submitDraft({
       slug,
-      clinicalGoal: "HABIT",
+      clinicalGoal: "PAIN",
       title: "Hábito (teste)",
       content: testContent("hábito"),
     });
 
-    const result = await service.matchGoal("HABIT");
+    const result = await service.matchGoal("PAIN");
     expect(result.matched).toBe(false);
   });
 
   it("depois de aprovada, a versão fica ativa e servível; aprovação exige approvedBy", async () => {
     const draft = await service.submitDraft({
       slug,
-      clinicalGoal: "HABIT",
+      clinicalGoal: "PAIN",
       title: "Hábito (teste)",
       content: testContent("hábito"),
     });
@@ -73,7 +73,7 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
 
     await service.approve(draft.versionId, "fundadora-teste@lexpsique.pt");
 
-    const result = await service.matchGoal("HABIT");
+    const result = await service.matchGoal("PAIN");
     expect(result.matched).toBe(true);
     if (result.matched) {
       expect(result.template.approvedBy).toBe("fundadora-teste@lexpsique.pt");
@@ -84,7 +84,7 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
   it("uma nova versão aprovada substitui a anterior como única ativa (nunca zero, nunca duas)", async () => {
     const v1 = await service.submitDraft({
       slug,
-      clinicalGoal: "HABIT",
+      clinicalGoal: "PAIN",
       title: "Hábito (teste) v1",
       content: testContent("hábito v1"),
     });
@@ -92,7 +92,7 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
 
     const v2 = await service.submitDraft({
       slug,
-      clinicalGoal: "HABIT",
+      clinicalGoal: "PAIN",
       title: "Hábito (teste) v2",
       content: testContent("hábito v2"),
     });
@@ -111,7 +111,7 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
 
     const placeholder = await service.submitDraft({
       slug,
-      clinicalGoal: "HABIT",
+      clinicalGoal: "PAIN",
       title: "Hábito (placeholder)",
       content: testContent("hábito placeholder"),
     });
@@ -119,13 +119,13 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
 
     const real = await service.submitDraft({
       slug: otherSlug,
-      clinicalGoal: "HABIT",
+      clinicalGoal: "PAIN",
       title: "Hábito (real)",
       content: testContent("hábito real"),
     });
     await service.approve(real.versionId, "fundadora-teste@lexpsique.pt");
 
-    const result = await service.matchGoal("HABIT");
+    const result = await service.matchGoal("PAIN");
     expect(result.matched).toBe(true);
     if (result.matched) {
       expect(result.template.id).toBe(real.versionId);
@@ -143,7 +143,7 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
   it("retire() remove definitivamente uma versão APPROVED de circulação", async () => {
     const draft = await service.submitDraft({
       slug,
-      clinicalGoal: "HABIT",
+      clinicalGoal: "PAIN",
       title: "Hábito (teste)",
       content: testContent("hábito"),
     });
@@ -151,7 +151,7 @@ describe("TemplateService — ciclo de aprovação (integração com Postgres re
 
     await service.retire(draft.versionId);
 
-    const result = await service.matchGoal("HABIT");
+    const result = await service.matchGoal("PAIN");
     expect(result.matched).toBe(false);
 
     const retired = await prisma.templateVersion.findUniqueOrThrow({ where: { id: draft.versionId } });

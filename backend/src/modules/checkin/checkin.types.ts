@@ -109,7 +109,39 @@ export const CONTRAINDICATION_SCREENING: Partial<Record<ClinicalGoal, Contraindi
       "avaliação e intervenção profissional, não um exercício autoguiado. Os recursos abaixo podem " +
       "ajudar a encontrar o apoio profissional adequado.",
   },
+  ...habitContraindicationEntries(),
 };
+
+/**
+ * Os guiões de Hábito excluem explicitamente dependência de substâncias,
+ * jogo, autolesão, compulsões graves e perturbações alimentares — "exigem
+ * protocolos clínicos próprios". A mesma pergunta/mensagem aplica-se a
+ * todos os hábitos específicos (secção 2 do guião real de Hábito).
+ */
+function habitContraindicationEntries(): Partial<Record<ClinicalGoal, ContraindicationScreening>> {
+  const screening: ContraindicationScreening = {
+    question:
+      "Este comportamento envolve consumo de álcool ou drogas, jogo, autolesão, uma perturbação " +
+      "alimentar, ou compulsão sexual?",
+    message:
+      "Este exercício não fica disponível para comportamentos que envolvam consumo de álcool ou " +
+      "drogas, jogo, autolesão, perturbações alimentares ou compulsão sexual — estas situações " +
+      "exigem um protocolo clínico próprio, não este exercício de mudança de hábito. Os recursos " +
+      "abaixo podem ajudar a encontrar o apoio profissional adequado.",
+  };
+
+  const habitGoals: ClinicalGoal[] = [
+    "HABIT_PHONE_OVERUSE",
+    "HABIT_PROCRASTINATION",
+    "HABIT_NAIL_BITING",
+    "HABIT_MINDLESS_SNACKING",
+    "HABIT_NOTIFICATION_CHECKING",
+    "HABIT_SEDENTARY_AVOIDANCE",
+    "HABIT_BEDTIME_PROCRASTINATION",
+  ];
+
+  return Object.fromEntries(habitGoals.map((goal) => [goal, screening]));
+}
 
 export const GOALS_REQUIRING_CONTRAINDICATION_SCREENING: ClinicalGoal[] = Object.keys(
   CONTRAINDICATION_SCREENING,
