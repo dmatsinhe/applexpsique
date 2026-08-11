@@ -20,6 +20,10 @@ type Step =
       outcome: Extract<CheckInOutcome, { kind: "crisis_needs_clarification" }>;
     }
   | { name: "no-template"; outcome: Extract<CheckInOutcome, { kind: "no_template_available" }> }
+  | {
+      name: "contraindication-flagged";
+      outcome: Extract<CheckInOutcome, { kind: "contraindication_flagged" }>;
+    }
   | { name: "personalize"; outcome: Extract<CheckInOutcome, { kind: "matched" }> }
   | {
       name: "session-result";
@@ -52,6 +56,9 @@ export function App() {
         break;
       case "no_template_available":
         setStep({ name: "no-template", outcome });
+        break;
+      case "contraindication_flagged":
+        setStep({ name: "contraindication-flagged", outcome });
         break;
       case "matched":
         setStep({ name: "personalize", outcome });
@@ -154,6 +161,14 @@ export function App() {
 
       {step.name === "no-template" && (
         <NoTemplateAvailable availableGoals={step.outcome.availableGoals} onRestart={restart} />
+      )}
+
+      {step.name === "contraindication-flagged" && (
+        <CrisisResources
+          response={step.outcome.response}
+          noRealTimeSupervisionNotice={step.outcome.message}
+          onRestart={restart}
+        />
       )}
 
       {step.name === "personalize" && (

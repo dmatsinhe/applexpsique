@@ -19,6 +19,14 @@ export interface CheckInSubmission {
   energyLevel: 1 | 2 | 3 | 4 | 5;
   /** Q5 — texto livre opcional, sempre avaliado pelo classificador de crise. */
   additionalNote?: string;
+  /**
+   * Autorrelato de contraindicações (secção 1, revisão de Ansiedade
+   * generalizada): só perguntado quando `requestedGoal` exige triagem
+   * prévia que a app não tem meios de fazer clinicamente (sem profissional
+   * no circuito). `true` = a pessoa reportou pelo menos uma
+   * contraindicação; a sessão é recusada, nunca gerada mesmo assim.
+   */
+  contraindicationSelfReport?: boolean;
 }
 
 export type CheckInOutcome =
@@ -43,6 +51,12 @@ export type CheckInOutcome =
     }
   | { kind: "no_template_available"; checkInId: string; availableGoals: ClinicalGoal[] }
   | {
+      kind: "contraindication_flagged";
+      checkInId: string;
+      response: CrisisResponseBundle;
+      message: string;
+    }
+  | {
       kind: "matched";
       checkInId: string;
       templateVersionId: string;
@@ -56,6 +70,15 @@ export type CheckInOutcome =
        */
       paceOptions: string[];
     };
+
+/**
+ * Objetivos cujo guião clínico pressupõe triagem prévia por um profissional
+ * (mania, psicose, dissociação, etc.) que a app não tem meios de fazer —
+ * substituída por autorrelato direto no check-in (secção 1, revisão de
+ * Ansiedade generalizada). Nunca crescer esta lista silenciosamente: só
+ * quando o guião real de um objetivo o exigir explicitamente.
+ */
+export const GOALS_REQUIRING_CONTRAINDICATION_SCREENING: ClinicalGoal[] = ["GENERALIZED_ANXIETY"];
 
 export function freeTextAnswers(submission: CheckInSubmission): string[] {
   return [

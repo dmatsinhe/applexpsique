@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { api, ApiError, type CheckInOutcome, type ClinicalGoal } from "../api/client.js";
 
+/**
+ * Objetivos cujo guião clínico exige triagem prévia que a app não pode
+ * fazer (sem profissional no circuito) — substituída por esta pergunta de
+ * autorrelato direto. Tem de espelhar
+ * GOALS_REQUIRING_CONTRAINDICATION_SCREENING no backend.
+ */
+const GOALS_REQUIRING_CONTRAINDICATION_SCREENING: ClinicalGoal[] = ["GENERALIZED_ANXIETY"];
+
 interface Props {
   onOutcome: (outcome: CheckInOutcome) => void;
 }
@@ -27,12 +35,22 @@ export function CheckIn({ onOutcome }: Props) {
   const [situationNote, setSituationNote] = useState("");
   const [energyLevel, setEnergyLevel] = useState<1 | 2 | 3 | 4 | 5>(3);
   const [additionalNote, setAdditionalNote] = useState("");
+  const [contraindicationSelfReport, setContraindicationSelfReport] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const needsContraindicationScreening =
+    GOALS_REQUIRING_CONTRAINDICATION_SCREENING.includes(requestedGoal);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (needsContraindicationScreening && contraindicationSelfReport === null) {
+      setError("Por favor responda à pergunta acima antes de continuar.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const outcome = await api.submitCheckIn({
@@ -41,6 +59,9 @@ export function CheckIn({ onOutcome }: Props) {
         situationNote: situationNote || undefined,
         energyLevel,
         additionalNote: additionalNote || undefined,
+        contraindicationSelfReport: needsContraindicationScreening
+          ? contraindicationSelfReport!
+          : undefined,
       });
       onOutcome(outcome);
     } catch (err) {
@@ -64,6 +85,32 @@ export function CheckIn({ onOutcome }: Props) {
             ))}
           </select>
         </label>
+        {needsContraindicationScreening && (
+          <fieldset>
+            <legend>
+              Alguma vez foi diagnosticado(a) com mania, psicose ou perturbação dissociativa, ou
+              está atualmente numa crise que exige apoio imediato?
+            </legend>
+            <label>
+              <input
+                type="radio"
+                name="contraindication"
+                checked={contraindicationSelfReport === false}
+                onChange={() => setContraindicationSelfReport(false)}
+              />
+              Não
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="contraindication"
+                checked={contraindicationSelfReport === true}
+                onChange={() => setContraindicationSelfReport(true)}
+              />
+              Sim
+            </label>
+          </fieldset>
+        )}
         <label>
           Como se tem sentido nos últimos dias?
           <textarea

@@ -13,6 +13,7 @@ export async function createCheckIn(params: {
     situationNote: params.submission.situationNote ?? null,
     energyLevel: params.submission.energyLevel,
     additionalNote: params.submission.additionalNote ?? null,
+    contraindicationSelfReport: params.submission.contraindicationSelfReport ?? null,
   });
 
   const created = await prisma.checkIn.create({
@@ -34,6 +35,7 @@ export async function getCheckIn(id: string) {
     situationNote: string | null;
     energyLevel: number;
     additionalNote: string | null;
+    contraindicationSelfReport: boolean | null;
   };
   return {
     id: checkIn.id,

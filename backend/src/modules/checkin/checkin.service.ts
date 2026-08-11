@@ -1,5 +1,6 @@
 import { CrisisService, resolveClarification, type ClarificationResolution } from "../crisis/crisis.service.js";
 import { needsClarification } from "../crisis/crisis.types.js";
+import { getCrisisResponseBundleForLocale } from "../crisis/crisis-resources.js";
 import { TemplateService } from "../templates/template.service.js";
 import {
   createCheckIn,
@@ -7,7 +8,18 @@ import {
   recordMatch,
   updateCrisisLevel,
 } from "./checkin.repository.js";
-import { freeTextAnswers, type CheckInOutcome, type CheckInSubmission } from "./checkin.types.js";
+import {
+  freeTextAnswers,
+  GOALS_REQUIRING_CONTRAINDICATION_SCREENING,
+  type CheckInOutcome,
+  type CheckInSubmission,
+} from "./checkin.types.js";
+
+const CONTRAINDICATION_FLAGGED_MESSAGE =
+  "Este exercício de hipnose autoguiada não é recomendado para quem tem diagnóstico de mania, " +
+  "psicose ou perturbação dissociativa, ou está a viver uma crise que exige apoio imediato. " +
+  "Por isso não fica disponível agora. Os recursos abaixo podem ajudar a encontrar o apoio " +
+  "profissional adequado.";
 
 export class CheckInService {
   constructor(
@@ -66,6 +78,20 @@ export class CheckInService {
     }
 
     const { id } = await createCheckIn({ submission, crisisSignalLevel: "ABSENT" });
+
+    if (
+      GOALS_REQUIRING_CONTRAINDICATION_SCREENING.includes(submission.requestedGoal) &&
+      submission.contraindicationSelfReport
+    ) {
+      await recordMatch({ checkInId: id, templateVersionId: null, refusedNoTemplateAvailable: false });
+      return {
+        kind: "contraindication_flagged",
+        checkInId: id,
+        response: getCrisisResponseBundleForLocale(submission.locale),
+        message: CONTRAINDICATION_FLAGGED_MESSAGE,
+      };
+    }
+
     return this.matchTemplate(id, submission.requestedGoal);
   }
 

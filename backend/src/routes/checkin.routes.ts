@@ -18,6 +18,7 @@ const submitSchema = z.object({
   situationNote: z.string().optional(),
   energyLevel: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
   additionalNote: z.string().optional(),
+  contraindicationSelfReport: z.boolean().optional(),
 });
 
 router.post(

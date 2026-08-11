@@ -65,6 +65,12 @@ export type CheckInOutcome =
     }
   | { kind: "no_template_available"; checkInId: string; availableGoals: ClinicalGoal[] }
   | {
+      kind: "contraindication_flagged";
+      checkInId: string;
+      response: CrisisResponseBundle;
+      message: string;
+    }
+  | {
       kind: "matched";
       checkInId: string;
       templateVersionId: string;
@@ -122,6 +128,7 @@ export const api = {
     situationNote?: string;
     energyLevel: 1 | 2 | 3 | 4 | 5;
     additionalNote?: string;
+    contraindicationSelfReport?: boolean;
   }) => request<CheckInOutcome>("/checkin", { method: "POST", body: JSON.stringify(params) }),
 
   continueAfterAmbiguousCrisis: (checkInId: string) =>

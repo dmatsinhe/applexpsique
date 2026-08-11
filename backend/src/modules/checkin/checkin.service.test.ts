@@ -59,6 +59,7 @@ async function cleanupSlug(slug: string) {
 
 describe("CheckInService — fluxo completo (integração com Postgres real)", () => {
   const sleepSlug = "teste-checkin-sono";
+  const anxietySlug = "teste-checkin-ansiedade";
 
   beforeAll(async () => {
     const user = await prisma.user.create({
@@ -71,10 +72,12 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     });
     userId = user.id;
     await cleanupSlug(sleepSlug);
+    await cleanupSlug(anxietySlug);
   });
 
   afterAll(async () => {
     await cleanupSlug(sleepSlug);
+    await cleanupSlug(anxietySlug);
     await prisma.checkIn.deleteMany({ where: { userId } });
     await prisma.user.delete({ where: { id: userId } });
     await prisma.$disconnect();
@@ -182,5 +185,42 @@ describe("CheckInService — fluxo completo (integração com Postgres real)", (
     if (outcome.kind === "matched") {
       expect(outcome.clinicalGoal).toBe("SLEEP");
     }
+  });
+
+  it("Ansiedade generalizada com autorrelato de contraindicação recusa a sessão, mesmo com template aprovado", async () => {
+    await approveTemplateForGoal(anxietySlug, "GENERALIZED_ANXIETY");
+
+    const outcome = await checkInService.submit(
+      baseSubmission({
+        requestedGoal: "GENERALIZED_ANXIETY",
+        contraindicationSelfReport: true,
+      }),
+    );
+    expect(outcome.kind).toBe("contraindication_flagged");
+    if (outcome.kind === "contraindication_flagged") {
+      expect(outcome.response.immediateResources.length).toBeGreaterThan(0);
+      expect(outcome.response.regionalProfessionalSupport.length).toBeGreaterThan(0);
+      expect(outcome.message.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("Ansiedade generalizada sem contraindicação reportada corresponde normalmente ao template", async () => {
+    const outcome = await checkInService.submit(
+      baseSubmission({
+        requestedGoal: "GENERALIZED_ANXIETY",
+        contraindicationSelfReport: false,
+      }),
+    );
+    expect(outcome.kind).toBe("matched");
+    if (outcome.kind === "matched") {
+      expect(outcome.clinicalGoal).toBe("GENERALIZED_ANXIETY");
+    }
+  });
+
+  it("a pergunta de contraindicação é ignorada para objetivos que não a exigem", async () => {
+    const outcome = await checkInService.submit(
+      baseSubmission({ requestedGoal: "SLEEP", contraindicationSelfReport: true }),
+    );
+    expect(outcome.kind).toBe("matched");
   });
 });
