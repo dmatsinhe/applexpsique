@@ -52,6 +52,26 @@ services:
         value: https://lexpsique-demo-frontend.onrender.com
       - key: ANTHROPIC_API_KEY
         value: ""
+      - key: FRONTEND_URL
+        value: https://lexpsique-demo-frontend.onrender.com
+      # Faturação (Stripe) — `sync: false` faz o Render pedir estes valores
+      # uma única vez no dashboard, sem os escrever aqui nem no repositório
+      # (que é público). Sem eles preenchidos, a app funciona normalmente;
+      # só a subscrição fica indisponível (503) até serem configurados. Ver
+      # docs/interno/preco-e-nome.md e o guia de configuração da conta
+      # Stripe.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_PT_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_PT_ANNUAL
+        sync: false
+      - key: STRIPE_PRICE_BR_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_BR_ANNUAL
+        sync: false
 
   - type: web
     name: lexpsique-demo-frontend

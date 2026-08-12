@@ -20,6 +20,18 @@ export const env = {
     .map((origin) => origin.trim())
     .filter(Boolean),
   isProduction: process.env.NODE_ENV === "production",
+
+  // Faturação (Stripe) — ver billing.service.ts. Todos opcionais: sem
+  // STRIPE_SECRET_KEY a app funciona normalmente, só a faturação fica
+  // indisponível (503), o que é o estado esperado antes de a fundadora
+  // configurar a conta Stripe.
+  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  stripePricePtMonthly: process.env.STRIPE_PRICE_PT_MONTHLY ?? "",
+  stripePricePtAnnual: process.env.STRIPE_PRICE_PT_ANNUAL ?? "",
+  stripePriceBrMonthly: process.env.STRIPE_PRICE_BR_MONTHLY ?? "",
+  stripePriceBrAnnual: process.env.STRIPE_PRICE_BR_ANNUAL ?? "",
 };
 
 export function requireEncryptionKey(): string {

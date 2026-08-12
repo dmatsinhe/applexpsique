@@ -198,6 +198,12 @@ export const api = {
 
   getPrivacyPolicyMarkdown: () => requestText("/legal/privacy-policy"),
 
+  createCheckoutSession: (params: { market: "PT" | "BR"; cadence: "monthly" | "annual" }) =>
+    request<{ url: string }>("/billing/checkout-session", { method: "POST", body: JSON.stringify(params) }),
+
+  createBillingPortalSession: () =>
+    request<{ url: string }>("/billing/portal-session", { method: "POST" }),
+
   exportAccountData: () => request<Record<string, unknown>>("/account/export"),
 
   deleteAccountHistory: () => request<void>("/account/history", { method: "DELETE" }),

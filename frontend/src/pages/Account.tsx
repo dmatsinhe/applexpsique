@@ -28,8 +28,25 @@ export function Account({ onBack, onAccountDeleted }: Props) {
   const [deletingHistory, setDeletingHistory] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleManageSubscription() {
+    setOpeningPortal(true);
+    setError(null);
+    try {
+      const { url } = await api.createBillingPortalSession();
+      window.location.href = url;
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Não foi possível abrir a gestão de subscrição.",
+      );
+      setOpeningPortal(false);
+    }
+  }
 
   async function handleExport() {
     setExporting(true);
@@ -84,6 +101,14 @@ export function Account({ onBack, onAccountDeleted }: Props) {
 
       {error && <p className="error" role="alert">{error}</p>}
       {message && <p className="explainer">{message}</p>}
+
+      <h2>Subscrição</h2>
+      <p className="explainer">
+        Ver fatura, atualizar o método de pagamento ou cancelar a subscrição Premium.
+      </p>
+      <button type="button" className="secondary" onClick={handleManageSubscription} disabled={openingPortal}>
+        {openingPortal ? "A abrir…" : "Gerir subscrição"}
+      </button>
 
       <h2>Descarregar os meus dados</h2>
       <p className="explainer">

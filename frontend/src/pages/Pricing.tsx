@@ -1,11 +1,66 @@
+import { useState } from "react";
+import { api, ApiError } from "../api/client.js";
+
 interface Props {
   onBack: () => void;
+  isAuthenticated: boolean;
 }
 
 interface MarketPrice {
   market: string;
   monthly: string;
   annual: string;
+}
+
+interface SubscribeCardProps {
+  market: "PT" | "BR";
+  label: string;
+  monthlyPrice: string;
+  annualPrice: string;
+  isAuthenticated: boolean;
+}
+
+function SubscribeCard({ market, label, monthlyPrice, annualPrice, isAuthenticated }: SubscribeCardProps) {
+  const [loadingCadence, setLoadingCadence] = useState<"monthly" | "annual" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubscribe(cadence: "monthly" | "annual") {
+    setError(null);
+    if (!isAuthenticated) {
+      setError("Precisa de iniciar sessão antes de subscrever.");
+      return;
+    }
+    setLoadingCadence(cadence);
+    try {
+      const { url } = await api.createCheckoutSession({ market, cadence });
+      window.location.href = url;
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Não foi possível iniciar o pagamento. Tente novamente mais tarde.",
+      );
+      setLoadingCadence(null);
+    }
+  }
+
+  return (
+    <div className="subscribe-card">
+      <h3>{label}</h3>
+      {error && <p className="error" role="alert">{error}</p>}
+      <button type="button" onClick={() => handleSubscribe("monthly")} disabled={loadingCadence !== null}>
+        {loadingCadence === "monthly" ? "A abrir pagamento…" : `Subscrever — ${monthlyPrice}/mês`}
+      </button>
+      <button
+        type="button"
+        className="secondary"
+        onClick={() => handleSubscribe("annual")}
+        disabled={loadingCadence !== null}
+      >
+        {loadingCadence === "annual" ? "A abrir pagamento…" : `Subscrever anual — ${annualPrice}/ano`}
+      </button>
+    </div>
+  );
 }
 
 const MARKET_PRICES: MarketPrice[] = [
@@ -21,12 +76,12 @@ const MARKET_PRICES: MarketPrice[] = [
 ];
 
 /**
- * Página informativa de preços — secção de negócio, sem qualquer sistema
- * de subscrição ou pagamento por trás (ver docs/interno/preco-e-nome.md).
- * Por isso não há botão "Subscrever": mostrar um botão que não faz nada
- * seria enganoso.
+ * Página de preços — secção de negócio (ver docs/interno/preco-e-nome.md).
+ * Pagamento real (Stripe) só está ligado para Portugal e Brasil, o
+ * lançamento faseado escolhido pela fundadora; os restantes mercados
+ * continuam só informativos, sem botão de compra, até serem ativados.
  */
-export function Pricing({ onBack }: Props) {
+export function Pricing({ onBack, isAuthenticated }: Props) {
   return (
     <div className="screen">
       <button type="button" className="secondary" onClick={onBack}>
@@ -41,8 +96,8 @@ export function Pricing({ onBack }: Props) {
       </p>
 
       <p className="supervision-notice">
-        Esta página mostra os planos e valores previstos. Ainda não existe um sistema de
-        subscrição ou pagamento ativo na app — por isso não há aqui nenhum botão de compra.
+        Pagamento disponível para Portugal e Brasil. Os restantes mercados mostram os valores
+        previstos, ainda sem botão de compra.
       </p>
 
       <h2>Gratuito</h2>
@@ -64,6 +119,28 @@ export function Pricing({ onBack }: Props) {
       <p className="explainer">
         Consultas com psicólogos são sempre cobradas à parte — nunca incluídas na mensalidade.
       </p>
+
+      <h2>Subscrever</h2>
+      <p className="explainer">
+        Cartão, PayPal ou Multibanco (Portugal). É redirecionado para uma página de pagamento
+        segura do Stripe — a CuidaMente nunca vê nem guarda os dados do seu cartão.
+      </p>
+      <div className="subscribe-grid">
+        <SubscribeCard
+          market="PT"
+          label="Portugal"
+          monthlyPrice="€5,99"
+          annualPrice="€49,99"
+          isAuthenticated={isAuthenticated}
+        />
+        <SubscribeCard
+          market="BR"
+          label="Brasil"
+          monthlyPrice="R$19,90"
+          annualPrice="R$159,90"
+          isAuthenticated={isAuthenticated}
+        />
+      </div>
 
       <h2>Preços por mercado</h2>
       <div className="markdown-content" style={{ overflowX: "auto" }}>

@@ -25,6 +25,14 @@ model User {
   isAdultVerified Boolean   @default(false)
   ageVerifiedAt   DateTime?
 
+  // Faturação (Stripe) — ver billing.service.ts. Nunca dados de cartão em
+  // si, só os identificadores que o Stripe devolve.
+  plan                 Plan      @default(FREE)
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?
+  planRenewsAt         DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -34,6 +42,13 @@ model User {
   crisisEvents     CrisisEvent[]
 
   @@map("users")
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+
+  @@map("plan")
 }
 
 // ---------------------------------------------------------------------------
@@ -240,6 +255,18 @@ model TherapySession {
 // ---------------------------------------------------------------------------
 // Preferências de voz (secção 2) — fora do MVP passo 1, schema já preparado
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Faturação — eventos de webhook do Stripe já processados, para garantir
+// idempotência (o Stripe pode reenviar o mesmo evento mais do que uma vez).
+// ---------------------------------------------------------------------------
+
+model ProcessedStripeEvent {
+  id          String   @id // o Stripe event id (evt_...)
+  processedAt DateTime @default(now())
+
+  @@map("processed_stripe_events")
+}
 
 model VoicePreference {
   userId String @id
