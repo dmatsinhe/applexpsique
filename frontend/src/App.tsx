@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { setAuthToken, type CheckInOutcome, type TemplateSection } from "./api/client.js";
+import {
+  setAuthToken,
+  hasStoredAuthToken,
+  type CheckInOutcome,
+  type TemplateSection,
+} from "./api/client.js";
 import { AgeGate } from "./pages/AgeGate.js";
 import { CheckIn } from "./pages/CheckIn.js";
 import { CrisisResources } from "./pages/CrisisResources.js";
@@ -40,8 +45,11 @@ type Step =
 type Overlay = "none" | "founder-profile" | "account" | "privacy-policy" | "pricing";
 
 export function App() {
-  const [step, setStep] = useState<Step>({ name: "age-gate" });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const alreadyAuthenticated = hasStoredAuthToken();
+  const [step, setStep] = useState<Step>(
+    alreadyAuthenticated ? { name: "checkin" } : { name: "age-gate" },
+  );
+  const [isAuthenticated, setIsAuthenticated] = useState(alreadyAuthenticated);
   const [overlay, setOverlay] = useState<Overlay>("none");
 
   function handleOutcome(outcome: CheckInOutcome) {
@@ -131,7 +139,7 @@ export function App() {
 
       {step.name === "age-gate" && (
         <AgeGate
-          onRegistered={(token) => {
+          onAuthenticated={(token) => {
             setAuthToken(token);
             setIsAuthenticated(true);
             setStep({ name: "checkin" });

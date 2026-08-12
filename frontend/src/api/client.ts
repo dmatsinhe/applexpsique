@@ -87,10 +87,28 @@ export type CheckInOutcome =
 
 class ApiError extends Error {}
 
-let authToken: string | null = null;
+const AUTH_TOKEN_STORAGE_KEY = "cuidamente-auth-token";
+
+/**
+ * Persistido em localStorage para a sessão sobreviver a recarregar a
+ * página — sem isto, qualquer refresh perdia o login e a única forma de
+ * voltar a entrar era o ecrã de registo (que rejeita um email já usado).
+ */
+let authToken: string | null =
+  typeof localStorage !== "undefined" ? localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) : null;
 
 export function setAuthToken(token: string | null) {
   authToken = token;
+  if (typeof localStorage === "undefined") return;
+  if (token) {
+    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  } else {
+    localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  }
+}
+
+export function hasStoredAuthToken(): boolean {
+  return authToken !== null;
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
