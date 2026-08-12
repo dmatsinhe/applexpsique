@@ -137,3 +137,141 @@ describe("ManualPaymentService", () => {
     expect(pendingIds).not.toContain(second.id);
   });
 });
+
+function daysFromNow(days: number): Date {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+describe("ManualPaymentService — expiração automática", () => {
+  it("desativa o Premium de um plano manual cuja renovação já passou", async () => {
+    const user = await createTestUser(`manual-expired-${Date.now()}@lexpsique.pt`);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(-1) },
+    });
+
+    const { downgradedCount } = await service.expireOverdueManualPlans();
+    expect(downgradedCount).toBeGreaterThanOrEqual(1);
+
+    const updated = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(updated.plan).toBe("FREE");
+    expect(updated.subscriptionStatus).toBe("manual_expired");
+  });
+
+  it("não toca num plano manual cuja renovação ainda não chegou", async () => {
+    const user = await createTestUser(`manual-not-expired-${Date.now()}@lexpsique.pt`);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(10) },
+    });
+
+    await service.expireOverdueManualPlans();
+
+    const updated = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(updated.plan).toBe("PREMIUM");
+    expect(updated.subscriptionStatus).toBe("manual_active");
+  });
+
+  it("nunca toca num plano gerido pelo Stripe, mesmo com data de renovação no passado", async () => {
+    const user = await createTestUser(`manual-not-stripe-${Date.now()}@lexpsique.pt`);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "active", planRenewsAt: daysFromNow(-1) },
+    });
+
+    await service.expireOverdueManualPlans();
+
+    const updated = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(updated.plan).toBe("PREMIUM");
+    expect(updated.subscriptionStatus).toBe("active");
+  });
+
+  it("lista só quem expira dentro da janela de aviso, e limpa quem já expirou", async () => {
+    const expiringSoon = await createTestUser(`manual-expiring-soon-${Date.now()}@lexpsique.pt`);
+    const notSoon = await createTestUser(`manual-expiring-later-${Date.now()}@lexpsique.pt`);
+    const alreadyExpired = await createTestUser(`manual-already-expired-${Date.now()}@lexpsique.pt`);
+
+    await prisma.user.update({
+      where: { id: expiringSoon.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(1) },
+    });
+    await prisma.user.update({
+      where: { id: notSoon.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(10) },
+    });
+    await prisma.user.update({
+      where: { id: alreadyExpired.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(-1) },
+    });
+
+    const expiring = await service.listExpiringSoon();
+    const expiringIds = expiring.map((u) => u.id);
+    expect(expiringIds).toContain(expiringSoon.id);
+    expect(expiringIds).not.toContain(notSoon.id);
+    expect(expiringIds).not.toContain(alreadyExpired.id);
+
+    const cleanedUp = await prisma.user.findUniqueOrThrow({ where: { id: alreadyExpired.id } });
+    expect(cleanedUp.plan).toBe("FREE");
+  });
+
+  it("getPlanStatusForUser reporta a contagem de dias e o aviso de expiração", async () => {
+    const soon = await createTestUser(`manual-status-soon-${Date.now()}@lexpsique.pt`);
+    await prisma.user.update({
+      where: { id: soon.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(2) },
+    });
+    const soonStatus = await service.getPlanStatusForUser(soon.id);
+    expect(soonStatus.plan).toBe("PREMIUM");
+    expect(soonStatus.expiringWithinDays).toBe(true);
+    expect(soonStatus.daysRemaining).toBeLessThanOrEqual(3);
+
+    const later = await createTestUser(`manual-status-later-${Date.now()}@lexpsique.pt`);
+    await prisma.user.update({
+      where: { id: later.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(10) },
+    });
+    const laterStatus = await service.getPlanStatusForUser(later.id);
+    expect(laterStatus.expiringWithinDays).toBe(false);
+
+    const free = await createTestUser(`manual-status-free-${Date.now()}@lexpsique.pt`);
+    const freeStatus = await service.getPlanStatusForUser(free.id);
+    expect(freeStatus.plan).toBe("FREE");
+    expect(freeStatus.daysRemaining).toBeNull();
+    expect(freeStatus.expiringWithinDays).toBe(false);
+  });
+
+  it("getPlanStatusForUser desativa o Premium na hora se a renovação já passou", async () => {
+    const user = await createTestUser(`manual-status-expired-${Date.now()}@lexpsique.pt`);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { plan: "PREMIUM", subscriptionStatus: "manual_active", planRenewsAt: daysFromNow(-1) },
+    });
+
+    const status = await service.getPlanStatusForUser(user.id);
+    expect(status.plan).toBe("FREE");
+    expect(status.subscriptionStatus).toBe("manual_expired");
+    expect(status.expiringWithinDays).toBe(false);
+  });
+
+  it("um novo pagamento aprovado reativa o Premium depois de expirar", async () => {
+    const user = await createTestUser(`manual-reactivate-${Date.now()}@lexpsique.pt`);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { plan: "FREE", subscriptionStatus: "manual_expired", planRenewsAt: daysFromNow(-5) },
+    });
+
+    const request = await service.submitRequest(user.id, {
+      method: "MPESA",
+      cadence: "monthly",
+      reference: "TX-reativacao",
+    });
+    await service.approve(request.id, "fundadora-teste@lexpsique.pt");
+
+    const updated = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(updated.plan).toBe("PREMIUM");
+    expect(updated.subscriptionStatus).toBe("manual_active");
+    expect(updated.planRenewsAt!.getTime()).toBeGreaterThan(Date.now());
+  });
+});

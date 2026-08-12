@@ -222,6 +222,15 @@ export const api = {
       body: JSON.stringify(params),
     }),
 
+  getPlanStatus: () =>
+    request<{
+      plan: "FREE" | "PREMIUM";
+      subscriptionStatus: string | null;
+      planRenewsAt: string | null;
+      daysRemaining: number | null;
+      expiringWithinDays: boolean;
+    }>("/billing/plan-status"),
+
   exportAccountData: () => request<Record<string, unknown>>("/account/export"),
 
   deleteAccountHistory: () => request<void>("/account/history", { method: "DELETE" }),

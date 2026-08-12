@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, ApiError } from "../api/client.js";
 
 interface Props {
   onBack: () => void;
   onAccountDeleted: () => void;
+}
+
+interface PlanStatus {
+  plan: "FREE" | "PREMIUM";
+  planRenewsAt: string | null;
+  daysRemaining: number | null;
+  expiringWithinDays: boolean;
 }
 
 function downloadJson(data: unknown, filename: string) {
@@ -31,6 +38,11 @@ export function Account({ onBack, onAccountDeleted }: Props) {
   const [openingPortal, setOpeningPortal] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
+
+  useEffect(() => {
+    api.getPlanStatus().then(setPlanStatus).catch(() => setPlanStatus(null));
+  }, []);
 
   async function handleManageSubscription() {
     setOpeningPortal(true);
@@ -101,6 +113,28 @@ export function Account({ onBack, onAccountDeleted }: Props) {
 
       {error && <p className="error" role="alert">{error}</p>}
       {message && <p className="explainer">{message}</p>}
+
+      {planStatus && (
+        <>
+          <h2>Plano atual</h2>
+          <p className="explainer">
+            {planStatus.plan === "PREMIUM" ? "CuidaMente Premium" : "Grátis"}
+            {planStatus.plan === "PREMIUM" && planStatus.planRenewsAt && (
+              <>
+                {" "}
+                — renova a{" "}
+                {new Date(planStatus.planRenewsAt).toLocaleDateString("pt-PT")}
+              </>
+            )}
+          </p>
+          {planStatus.expiringWithinDays && (
+            <p className="error" role="alert">
+              A sua subscrição expira em breve. Renove na página de Preços para não perder o
+              acesso.
+            </p>
+          )}
+        </>
+      )}
 
       <h2>Subscrição</h2>
       <p className="explainer">

@@ -15,6 +15,14 @@ export const MZ_PRICES: Record<ManualCadence, string> = {
   annual: "1.590 MT",
 };
 
+/**
+ * Sem gateway automático, também não há aviso de renovação nem cobrança
+ * automática vindos de fora (o Stripe faz isso sozinho para PT/BR) — por
+ * isso a app faz a sua própria verificação: quantos dias antes de
+ * `planRenewsAt` o cliente já vê um aviso para renovar.
+ */
+export const MZ_RENEWAL_REMINDER_DAYS = 3;
+
 export interface PaymentContacts {
   paypalEmail: string;
   mpesaNumber: string;

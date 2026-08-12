@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  api,
   setAuthToken,
   hasStoredAuthToken,
   type CheckInOutcome,
@@ -59,6 +60,18 @@ export function App() {
   const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelado" | null>(
     readCheckoutStatusFromUrl,
   );
+  const [renewalWarningDays, setRenewalWarningDays] = useState<number | null>(null);
+  const [dismissedRenewalWarning, setDismissedRenewalWarning] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    api
+      .getPlanStatus()
+      .then((status) => {
+        setRenewalWarningDays(status.expiringWithinDays ? status.daysRemaining : null);
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   function dismissCheckoutStatus() {
     setCheckoutStatus(null);
@@ -97,6 +110,7 @@ export function App() {
   function handleAccountDeleted() {
     setAuthToken(null);
     setIsAuthenticated(false);
+    setRenewalWarningDays(null);
     setOverlay("none");
     setStep({ name: "age-gate" });
   }
@@ -147,6 +161,22 @@ export function App() {
         <p className="checkout-banner cancelled">
           Pagamento cancelado — não foi cobrado nada.{" "}
           <button type="button" className="link-button" onClick={dismissCheckoutStatus}>
+            Fechar
+          </button>
+        </p>
+      )}
+      {renewalWarningDays !== null && !dismissedRenewalWarning && (
+        <p className="checkout-banner cancelled">
+          {renewalWarningDays <= 0
+            ? "A sua subscrição Premium expira hoje."
+            : renewalWarningDays === 1
+              ? "A sua subscrição Premium expira amanhã."
+              : `A sua subscrição Premium expira em ${renewalWarningDays} dias.`}{" "}
+          Renove para não perder o acesso.{" "}
+          <button type="button" className="link-button" onClick={() => setOverlay("pricing")}>
+            Ver planos
+          </button>{" "}
+          <button type="button" className="link-button" onClick={() => setDismissedRenewalWarning(true)}>
             Fechar
           </button>
         </p>

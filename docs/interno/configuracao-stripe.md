@@ -150,10 +150,30 @@ curl -X POST https://lexpsique-demo-backend.onrender.com/admin/manual-payment-re
 ```
 
 Ao aprovar, a conta passa a Premium por 30 dias (mensal) ou 365 dias
-(anual) a partir desse momento. **Não há renovação automática** — quando
-esse prazo passa, a conta não volta sozinha a Grátis nem te avisa; isso
-fica para uma iteração futura (ex: uma verificação periódica). Por
-agora, é um controlo manual, tal como a confirmação do pagamento.
+(anual) a partir desse momento. **A renovação em si continua manual**
+(a pessoa tem de voltar a pagar e submeter uma nova referência), mas a
+app já trata da desativação e do aviso sozinha:
+
+- **Aviso ao cliente**: a partir de 3 dias antes da data de renovação,
+  a pessoa vê um aviso dentro da app ("A sua subscrição expira em X
+  dias") com um link direto para a página de Preços.
+- **Desativação automática**: se a data de renovação passar sem um novo
+  pagamento aprovado, a conta volta sozinha ao plano Grátis — não
+  precisas de fazer nada. Isto acontece assim que alguém "olha" para o
+  estado dessa conta (o próprio cliente ao abrir a app, ou tu ao
+  consultares a lista de pedidos), não é um relógio a correr em
+  segundo plano.
+- **Aviso para ti**: para veres quem está prestes a expirar (útil para
+  fazeres um lembrete manual, já que não há envio de email):
+
+```bash
+curl https://lexpsique-demo-backend.onrender.com/admin/manual-payment-requests/expiring-soon \
+  -H "x-admin-key: A_TUA_CHAVE"
+```
+
+Quando a pessoa pagar de novo e aprovares o novo pedido (mesmo processo
+de sempre), a conta volta a Premium com uma nova data de renovação —
+não é preciso nenhum passo extra por ter expirado entretanto.
 
 Os contactos de receção (email PayPal, números M-Pesa/e-Mola) estão
 configurados como variáveis de ambiente no Render

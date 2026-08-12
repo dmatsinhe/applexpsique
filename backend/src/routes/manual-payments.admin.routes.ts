@@ -22,6 +22,16 @@ router.get(
   }),
 );
 
+// Também corre o sweep de expiração antes de listar — cobre o caso de a
+// fundadora ser a primeira a olhar para isto depois de um plano expirar,
+// sem depender de o próprio utilizador ter voltado a abrir a app.
+router.get(
+  "/expiring-soon",
+  asyncRoute(async (_req, res) => {
+    res.json(await manualPaymentService.listExpiringSoon());
+  }),
+);
+
 const reviewSchema = z.object({ reviewedBy: z.string().min(1) });
 
 router.post(
