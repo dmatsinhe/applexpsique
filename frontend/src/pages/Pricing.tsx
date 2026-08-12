@@ -223,14 +223,13 @@ export function Pricing({ onBack, isAuthenticated }: Props) {
       <h2>Gratuito</h2>
       <ul>
         <li>Registo emocional diário</li>
-        <li>Conteúdos introdutórios</li>
-        <li>Um exercício de bem-estar por dia</li>
-        <li>Acesso limitado às ferramentas</li>
+        <li>Todos os objetivos disponíveis (sono, ansiedade, foco, hábitos e mais)</li>
+        <li>Uma sessão de hipnose por dia</li>
       </ul>
 
       <h2>CuidaMente Premium</h2>
       <ul>
-        <li>Todos os exercícios e programas</li>
+        <li>Sessões de hipnose sem limite diário</li>
         <li>Diário emocional completo</li>
         <li>Áudios de relaxamento</li>
         <li>Relatórios de evolução</li>

@@ -3,11 +3,23 @@ import { PersonalizationService } from "./personalization.service.js";
 import {
   abandonSession,
   completeSession,
+  countTherapySessionsSince,
   createTherapySession,
   getTherapySession,
+  getUserPlan,
   updateResumePosition,
 } from "./session.repository.js";
 import type { PersonalizationInput } from "./personalization.types.js";
+
+/**
+ * Distinção Grátis/Premium (ver docs/interno/preco-e-nome.md): Grátis tem
+ * direito a uma sessão por dia, Premium é ilimitado. Nunca aplicado ao
+ * check-in em si nem aos fluxos de crise — só à criação da sessão de
+ * hipnose já correspondida, o "exercício" que a página de preços descreve.
+ */
+export const FREE_PLAN_DAILY_SESSION_LIMIT = 1;
+
+export class DailySessionLimitReachedError extends Error {}
 
 export class SessionService {
   constructor(
@@ -25,6 +37,18 @@ export class SessionService {
     templateVersionId: string;
     personalization: PersonalizationInput;
   }) {
+    const plan = await getUserPlan(params.userId);
+    if (plan === "FREE") {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const sessionsToday = await countTherapySessionsSince(params.userId, startOfToday);
+      if (sessionsToday >= FREE_PLAN_DAILY_SESSION_LIMIT) {
+        throw new DailySessionLimitReachedError(
+          "Já usou a sua sessão gratuita de hoje. Volte amanhã ou torne-se Premium para sessões ilimitadas.",
+        );
+      }
+    }
+
     const template = await this.templateService.getApprovedVersionById(params.templateVersionId);
     if (!template) {
       throw new Error(

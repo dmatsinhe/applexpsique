@@ -258,6 +258,7 @@ export function App() {
           templateTitle={step.outcome.templateTitle}
           paceOptions={step.outcome.paceOptions}
           onCreated={(result) => setStep({ name: "session-result", rendered: result.rendered })}
+          onGoToPricing={() => setOverlay("pricing")}
         />
       )}
 

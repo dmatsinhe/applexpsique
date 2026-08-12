@@ -16,6 +16,7 @@ interface Props {
       pace: string;
     };
   }) => void;
+  onGoToPricing: () => void;
 }
 
 /**
@@ -23,16 +24,25 @@ interface Props {
  * backend rejeita qualquer ritmo fora de `paceOptions` — este formulário só
  * oferece essas opções, nunca texto livre para o ritmo.
  */
-export function Personalize({ templateVersionId, templateTitle, paceOptions, defaultSituationNote, onCreated }: Props) {
+export function Personalize({
+  templateVersionId,
+  templateTitle,
+  paceOptions,
+  defaultSituationNote,
+  onCreated,
+  onGoToPricing,
+}: Props) {
   const [name, setName] = useState("");
   const [situationNote, setSituationNote] = useState(defaultSituationNote ?? "");
   const [pace, setPace] = useState(paceOptions[0] ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setLimitReached(false);
     setSubmitting(true);
     try {
       const result = await api.createSession({
@@ -41,7 +51,12 @@ export function Personalize({ templateVersionId, templateTitle, paceOptions, def
       });
       onCreated(result);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Não foi possível preparar a sessão.");
+      if (err instanceof ApiError && err.status === 402) {
+        setLimitReached(true);
+        setError(err.message);
+      } else {
+        setError(err instanceof ApiError ? err.message : "Não foi possível preparar a sessão.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -75,9 +90,15 @@ export function Personalize({ templateVersionId, templateTitle, paceOptions, def
           </select>
         </label>
         {error && <p className="error" role="alert">{error}</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? "A preparar…" : "Começar sessão"}
-        </button>
+        {limitReached ? (
+          <button type="button" onClick={onGoToPricing}>
+            Ver planos Premium
+          </button>
+        ) : (
+          <button type="submit" disabled={submitting}>
+            {submitting ? "A preparar…" : "Começar sessão"}
+          </button>
+        )}
       </form>
     </div>
   );

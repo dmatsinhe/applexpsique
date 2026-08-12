@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../../lib/prisma.js";
-import { SessionService } from "./session.service.js";
+import { DailySessionLimitReachedError, SessionService } from "./session.service.js";
 import { TemplateService } from "../templates/template.service.js";
 import type { TemplateContent } from "../templates/template.types.js";
 
@@ -44,6 +44,10 @@ describe("SessionService — personalização + persistência encriptada + retom
         passwordHash: "not-a-real-hash",
         isAdultVerified: true,
         ageVerifiedAt: new Date(),
+        // Premium: este ficheiro testa personalização/persistência/retoma
+        // criando várias sessões para o mesmo utilizador — o limite diário
+        // do plano Grátis é testado à parte, em session.limit.test.ts.
+        plan: "PREMIUM",
       },
     });
     userId = user.id;

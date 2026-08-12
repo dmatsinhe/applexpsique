@@ -20,6 +20,15 @@ export async function createTherapySession(params: {
   return { id: created.id };
 }
 
+export async function countTherapySessionsSince(userId: string, since: Date): Promise<number> {
+  return prisma.therapySession.count({ where: { userId, startedAt: { gte: since } } });
+}
+
+export async function getUserPlan(userId: string): Promise<"FREE" | "PREMIUM"> {
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { plan: true } });
+  return user.plan;
+}
+
 export async function getTherapySession(id: string) {
   const session = await prisma.therapySession.findUniqueOrThrow({ where: { id } });
   return {

@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { BillingNotConfiguredError } from "../modules/billing/billing.service.js";
+import { DailySessionLimitReachedError } from "../modules/sessions/session.service.js";
 
 export function asyncRoute<T extends (req: Request, res: Response) => Promise<void>>(handler: T) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -16,6 +17,10 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
   }
   if (err instanceof BillingNotConfiguredError) {
     res.status(503).json({ error: err.message });
+    return;
+  }
+  if (err instanceof DailySessionLimitReachedError) {
+    res.status(402).json({ error: err.message });
     return;
   }
   if (err instanceof Error) {
