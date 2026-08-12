@@ -204,6 +204,24 @@ export const api = {
   createBillingPortalSession: () =>
     request<{ url: string }>("/billing/portal-session", { method: "POST" }),
 
+  getPaymentContacts: () =>
+    request<{
+      paypalEmail: string;
+      mpesaNumber: string;
+      emolaNumber: string;
+      prices: { monthly: string; annual: string };
+    }>("/billing/payment-contacts"),
+
+  submitManualPaymentRequest: (params: {
+    method: "PAYPAL" | "MPESA" | "EMOLA";
+    cadence: "monthly" | "annual";
+    reference: string;
+  }) =>
+    request<{ id: string; status: string }>("/billing/manual-payment-requests", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+
   exportAccountData: () => request<Record<string, unknown>>("/account/export"),
 
   deleteAccountHistory: () => request<void>("/account/history", { method: "DELETE" }),

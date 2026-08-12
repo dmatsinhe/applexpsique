@@ -32,6 +32,13 @@ export const env = {
   stripePricePtAnnual: process.env.STRIPE_PRICE_PT_ANNUAL ?? "",
   stripePriceBrMonthly: process.env.STRIPE_PRICE_BR_MONTHLY ?? "",
   stripePriceBrAnnual: process.env.STRIPE_PRICE_BR_ANNUAL ?? "",
+
+  // Pagamentos manuais (Moçambique — PayPal, M-Pesa, e-Mola). Sem gateway
+  // automático nestes métodos: ver manual-payment.service.ts. Valores por
+  // omissão são os fornecidos pela fundadora; sobrepor via env se mudarem.
+  paypalReceiveEmail: process.env.PAYPAL_RECEIVE_EMAIL ?? "lexpsiqueism@gmail.com",
+  mpesaReceiveNumber: process.env.MPESA_RECEIVE_NUMBER ?? "845946215",
+  emolaReceiveNumber: process.env.EMOLA_RECEIVE_NUMBER ?? "871619151",
 };
 
 export function requireEncryptionKey(): string {

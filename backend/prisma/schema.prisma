@@ -36,10 +36,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  checkIns         CheckIn[]
-  therapySessions  TherapySession[]
-  voicePreference  VoicePreference?
-  crisisEvents     CrisisEvent[]
+  checkIns              CheckIn[]
+  therapySessions       TherapySession[]
+  voicePreference       VoicePreference?
+  crisisEvents          CrisisEvent[]
+  manualPaymentRequests ManualPaymentRequest[]
 
   @@map("users")
 }
@@ -49,6 +50,51 @@ enum Plan {
   PREMIUM
 
   @@map("plan")
+}
+
+// ---------------------------------------------------------------------------
+// Pagamentos manuais (mercados sem gateway automático — ex: Moçambique,
+// M-Pesa/e-Mola) — ver manual-payment.service.ts. Nunca ativa o Premium
+// sozinho: fica PENDING até alguém com a chave de administração confirmar
+// o comprovativo submetido, o mesmo princípio de "nenhuma aprovação
+// automática" já usado no repositório de templates clínicos.
+// ---------------------------------------------------------------------------
+
+enum ManualPaymentMethod {
+  PAYPAL
+  MPESA
+  EMOLA
+
+  @@map("manual_payment_method")
+}
+
+enum ManualPaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@map("manual_payment_status")
+}
+
+model ManualPaymentRequest {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  market      String // "MZ" por agora — ver manual-payment.types.ts
+  method      ManualPaymentMethod
+  cadence     String // "monthly" | "annual"
+  amountLabel String // ex: "199 MT" — só para mostrar, valor não é verificado automaticamente
+  reference   String // referência/comprovativo submetido pelo utilizador
+
+  status     ManualPaymentStatus @default(PENDING)
+  reviewedBy String?
+  reviewedAt DateTime?
+  reviewNote String?
+
+  createdAt DateTime @default(now())
+
+  @@map("manual_payment_requests")
 }
 
 // ---------------------------------------------------------------------------

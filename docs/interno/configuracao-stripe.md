@@ -112,3 +112,51 @@ Multibanco, a renovação do plano não é 100% automática — o Stripe envia
 uma fatura por email a pedir o pagamento da renovação, em vez de cobrar
 sozinho. É o comportamento normal deste método em qualquer país, não é um
 problema do nosso código.
+
+## Moçambique — PayPal, M-Pesa, e-Mola (pagamento manual)
+
+Ao contrário de Portugal/Brasil, Moçambique **não passa pelo Stripe**.
+M-Pesa e e-Mola não têm um gateway de pagamento automático que se possa
+ligar por código — uma ligação automática exigiria um contrato direto
+com a Vodacom (M-Pesa) ou a Movitel (e-Mola), algo que não se resolve só
+com programação. Por isso este mercado usa um fluxo manual:
+
+1. Na página de Preços, a pessoa escolhe PayPal, M-Pesa ou e-Mola, vê o
+   valor e o teu contacto (email PayPal / número M-Pesa / número e-Mola),
+   faz a transferência por fora da app, e submete a referência ou
+   comprovativo na app.
+2. Isso cria um "pedido pendente" — a conta continua no plano Grátis até
+   alguém confirmar.
+3. Tu confirmas com a tua chave de administração (`ADMIN_API_KEY`, a
+   mesma usada para aprovar os guiões clínicos):
+
+```bash
+# Ver pedidos pendentes
+curl https://lexpsique-demo-backend.onrender.com/admin/manual-payment-requests \
+  -H "x-admin-key: A_TUA_CHAVE"
+
+# Depois de confirmares o pagamento na tua conta PayPal/M-Pesa/e-Mola,
+# aprovar (ativa o Premium na hora):
+curl -X POST https://lexpsique-demo-backend.onrender.com/admin/manual-payment-requests/ID_DO_PEDIDO/approve \
+  -H "x-admin-key: A_TUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{"reviewedBy": "o-teu-email"}'
+
+# Ou rejeitar, se a referência não bater certo:
+curl -X POST https://lexpsique-demo-backend.onrender.com/admin/manual-payment-requests/ID_DO_PEDIDO/reject \
+  -H "x-admin-key: A_TUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{"reviewedBy": "o-teu-email", "note": "referência não encontrada"}'
+```
+
+Ao aprovar, a conta passa a Premium por 30 dias (mensal) ou 365 dias
+(anual) a partir desse momento. **Não há renovação automática** — quando
+esse prazo passa, a conta não volta sozinha a Grátis nem te avisa; isso
+fica para uma iteração futura (ex: uma verificação periódica). Por
+agora, é um controlo manual, tal como a confirmação do pagamento.
+
+Os contactos de receção (email PayPal, números M-Pesa/e-Mola) estão
+configurados como variáveis de ambiente no Render
+(`PAYPAL_RECEIVE_EMAIL`, `MPESA_RECEIVE_NUMBER`, `EMOLA_RECEIVE_NUMBER`)
+— podes mudá-los lá diretamente se os números mudarem, sem precisar de
+mexer no código.

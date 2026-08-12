@@ -7,8 +7,10 @@ import { asyncRoute } from "../middleware/errorHandler.js";
 const router = Router();
 const billingService = new BillingService();
 
-router.use(requireAuth);
-
+// requireAuth aplicado por rota (não via router.use) — este router
+// partilha o prefixo /billing com manual-payments.routes.ts, cujo
+// GET /payment-contacts é público; um router.use(requireAuth) sem
+// caminho bloquearia esse pedido antes de sequer chegar ao outro router.
 const checkoutSessionSchema = z.object({
   market: z.enum(["PT", "BR"]),
   cadence: z.enum(["monthly", "annual"]),
@@ -16,6 +18,7 @@ const checkoutSessionSchema = z.object({
 
 router.post(
   "/checkout-session",
+  requireAuth,
   asyncRoute(async (req, res) => {
     const { market, cadence } = checkoutSessionSchema.parse(req.body);
     const { url } = await billingService.createCheckoutSession(req.userId!, market, cadence);
@@ -25,6 +28,7 @@ router.post(
 
 router.post(
   "/portal-session",
+  requireAuth,
   asyncRoute(async (req, res) => {
     const { url } = await billingService.createBillingPortalSession(req.userId!);
     res.json({ url });

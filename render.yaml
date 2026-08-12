@@ -72,6 +72,16 @@ services:
         sync: false
       - key: STRIPE_PRICE_BR_ANNUAL
         sync: false
+      # Pagamentos manuais (Moçambique — PayPal, M-Pesa, e-Mola). Não são
+      # segredos, só contactos de receção; explícitos aqui para serem
+      # fáceis de atualizar no dashboard se mudarem, sem precisar de
+      # redeploy. Ver docs/interno/configuracao-stripe.md.
+      - key: PAYPAL_RECEIVE_EMAIL
+        value: lexpsiqueism@gmail.com
+      - key: MPESA_RECEIVE_NUMBER
+        value: "845946215"
+      - key: EMOLA_RECEIVE_NUMBER
+        value: "871619151"
 
   - type: web
     name: lexpsique-demo-frontend

@@ -71,6 +71,11 @@ origem de Dália Matsinhe; Angola é expansão regional natural.
 
 ## Estado de implementação
 
-Nada disto está implementado — não existe sistema de subscrição,
-pagamento, nem distinção de planos gratuito/premium no código atual.
-Fica registado aqui para quando entrar em desenvolvimento.
+Subscrição e distinção de planos Grátis/Premium já estão implementadas
+(2026-08-12). Portugal e Brasil pagam via Stripe (cartão, PayPal,
+Multibanco em Portugal) — falta só a fundadora configurar a conta Stripe
+(ver docs/interno/configuracao-stripe.md). Moçambique paga por PayPal,
+M-Pesa ou e-Mola, com confirmação manual pela fundadora (sem gateway
+automático — ver a mesma nota). Os restantes mercados (Angola, Cabo
+Verde, Guiné-Bissau, São Tomé e Príncipe, Timor-Leste, Guiné Equatorial)
+continuam só informativos na página de preços, sem forma de pagar ainda.
