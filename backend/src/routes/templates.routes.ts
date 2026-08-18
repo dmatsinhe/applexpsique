@@ -16,6 +16,13 @@ const templateService = new TemplateService();
 
 router.use(requireAdminKey);
 
+router.get(
+  "/",
+  asyncRoute(async (_req, res) => {
+    res.json(await templateService.listAllActive());
+  }),
+);
+
 const draftSchema = z.object({
   slug: z.string().min(1),
   clinicalGoal: z.enum(CLINICAL_GOALS),

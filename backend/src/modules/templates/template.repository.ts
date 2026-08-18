@@ -86,6 +86,32 @@ export async function listAvailableGoals(): Promise<ClinicalGoal[]> {
 }
 
 /**
+ * Exporta o conteúdo completo de todos os guiões atualmente ativos e
+ * aprovados — usado para a fundadora rever/exportar tudo o que está
+ * realmente em produção (ex: preparar gravações de voz), nunca para
+ * gerar ou alterar conteúdo.
+ */
+export async function listAllActiveApprovedVersions(): Promise<ActiveTemplateVersion[]> {
+  const versions = await prisma.templateVersion.findMany({
+    where: { status: "APPROVED", isActive: true },
+    include: { template: true },
+    orderBy: { template: { clinicalGoal: "asc" } },
+  });
+
+  return versions.map((version) => ({
+    id: version.id,
+    templateId: version.templateId,
+    slug: version.template.slug,
+    clinicalGoal: version.template.clinicalGoal as ClinicalGoal,
+    title: version.template.title,
+    version: version.version,
+    content: version.content as unknown as TemplateContent,
+    approvedBy: version.approvedBy!,
+    approvedAt: version.approvedAt!,
+  }));
+}
+
+/**
  * Cria uma nova versão DRAFT. Nunca atualiza uma versão existente —
  * "alterações a um template exigem nova aprovação antes de substituir a
  * versão em produção — nada de edição silenciosa em produção" (secção 1).

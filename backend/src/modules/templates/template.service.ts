@@ -3,6 +3,7 @@ import {
   createDraftVersion,
   findActiveApprovedVersionForGoal,
   getApprovedVersionById,
+  listAllActiveApprovedVersions,
   listAvailableGoals,
   retireVersion,
   type ActiveTemplateVersion,
@@ -31,6 +32,10 @@ export class TemplateService {
 
   async getApprovedVersionById(versionId: string): Promise<ActiveTemplateVersion | null> {
     return getApprovedVersionById(versionId);
+  }
+
+  async listAllActive(): Promise<ActiveTemplateVersion[]> {
+    return listAllActiveApprovedVersions();
   }
 
   async submitDraft(params: {
