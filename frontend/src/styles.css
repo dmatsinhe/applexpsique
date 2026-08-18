@@ -191,9 +191,22 @@ button.secondary:hover:not(:disabled) {
   margin-top: 0;
 }
 
+.app-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.app-logo {
+  height: 64px;
+  width: 64px;
+  border-radius: 50%;
+}
+
 .top-nav {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 1.25rem;
   margin-bottom: 1rem;
 }

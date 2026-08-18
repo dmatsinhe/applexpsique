@@ -46,6 +46,14 @@ type Step =
 
 type Overlay = "none" | "founder-profile" | "account" | "privacy-policy" | "pricing" | "progress-report";
 
+function AppHeader() {
+  return (
+    <div className="app-header">
+      <img src="/logo.png" alt="Lexpsique, Lda. — Dália Matsinhe" className="app-logo" />
+    </div>
+  );
+}
+
 export function App() {
   const alreadyAuthenticated = hasStoredAuthToken();
   const [step, setStep] = useState<Step>(
@@ -104,6 +112,7 @@ export function App() {
   if (overlay === "founder-profile") {
     return (
       <main className="app">
+        <AppHeader />
         <FounderProfile onBack={() => setOverlay("none")} />
       </main>
     );
@@ -112,6 +121,7 @@ export function App() {
   if (overlay === "account") {
     return (
       <main className="app">
+        <AppHeader />
         <Account onBack={() => setOverlay("none")} onAccountDeleted={handleAccountDeleted} />
       </main>
     );
@@ -120,6 +130,7 @@ export function App() {
   if (overlay === "privacy-policy") {
     return (
       <main className="app">
+        <AppHeader />
         <PrivacyPolicy onBack={() => setOverlay("none")} />
       </main>
     );
@@ -128,6 +139,7 @@ export function App() {
   if (overlay === "pricing") {
     return (
       <main className="app">
+        <AppHeader />
         <Pricing onBack={() => setOverlay("none")} isAuthenticated={isAuthenticated} />
       </main>
     );
@@ -136,6 +148,7 @@ export function App() {
   if (overlay === "progress-report") {
     return (
       <main className="app">
+        <AppHeader />
         <ProgressReport onBack={() => setOverlay("none")} onGoToPricing={() => setOverlay("pricing")} />
       </main>
     );
@@ -143,6 +156,7 @@ export function App() {
 
   return (
     <main className="app">
+      <AppHeader />
       {renewalWarningDays !== null && !dismissedRenewalWarning && (
         <p className="checkout-banner cancelled">
           {renewalWarningDays <= 0
