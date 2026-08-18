@@ -56,7 +56,7 @@ export class SessionService {
       );
     }
 
-    const rendered = this.personalizationService.render(template, params.personalization);
+    const rendered = await this.personalizationService.render(template, params.personalization, plan === "PREMIUM");
 
     const { id } = await createTherapySession({
       userId: params.userId,

@@ -51,7 +51,7 @@ services:
       - key: CORS_ORIGINS
         value: https://lexpsique-demo-frontend.onrender.com
       - key: ANTHROPIC_API_KEY
-        value: ""
+        sync: false
       # Pagamentos manuais — único mecanismo de faturação (Portugal, Brasil,
       # Moçambique). Não são segredos, só os contactos/dados de receção
       # mostrados a qualquer pessoa na página de Preços; explícitos aqui

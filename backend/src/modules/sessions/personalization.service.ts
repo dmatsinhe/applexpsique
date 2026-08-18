@@ -1,5 +1,6 @@
 import type { ActiveTemplateVersion } from "../templates/template.repository.js";
 import type { PersonalizationInput, RenderedSession } from "./personalization.types.js";
+import { SituationRewriter } from "./situation-rewriter.js";
 
 const MAX_FREE_TEXT_LENGTH = 200;
 
@@ -24,7 +25,18 @@ function sanitizeFreeText(value: string): string {
  * centrais".
  */
 export class PersonalizationService {
-  render(template: ActiveTemplateVersion, input: PersonalizationInput): RenderedSession {
+  constructor(private readonly situationRewriter: SituationRewriter = new SituationRewriter()) {}
+
+  /**
+   * useAiPersonalization só deve vir true para utilizadoras Premium (ver
+   * SessionService.createFromMatchedTemplate) — Grátis nunca chama a IA,
+   * mesmo que a chave esteja configurada.
+   */
+  async render(
+    template: ActiveTemplateVersion,
+    input: PersonalizationInput,
+    useAiPersonalization: boolean = false,
+  ): Promise<RenderedSession> {
     const { content } = template;
 
     if (!content.paceOptions.includes(input.pace)) {
@@ -42,10 +54,15 @@ export class PersonalizationService {
     }
 
     const name = sanitizeFreeText(input.name || "");
-    const situation = sanitizeFreeText(input.situationNote || "o que o trouxe até aqui");
+    let situation = sanitizeFreeText(input.situationNote || "o que o trouxe até aqui");
 
     if (name.length === 0) {
       throw new Error("Nome é obrigatório para personalizar a sessão.");
+    }
+
+    if (useAiPersonalization) {
+      const rewritten = await this.situationRewriter.rewrite(situation);
+      situation = sanitizeFreeText(rewritten);
     }
 
     const opening = content.personalizableOpening
