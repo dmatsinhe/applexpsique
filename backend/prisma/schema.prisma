@@ -25,13 +25,12 @@ model User {
   isAdultVerified Boolean   @default(false)
   ageVerifiedAt   DateTime?
 
-  // Faturação (Stripe) — ver billing.service.ts. Nunca dados de cartão em
-  // si, só os identificadores que o Stripe devolve.
-  plan                 Plan      @default(FREE)
-  stripeCustomerId     String?   @unique
-  stripeSubscriptionId String?   @unique
-  subscriptionStatus   String?
-  planRenewsAt         DateTime?
+  // Faturação (pagamentos manuais — PayPal, transferência bancária,
+  // M-Pesa, e-Mola) — ver manual-payment.service.ts. Sem gateway
+  // automático: nunca há dados de pagamento em si, só o estado do plano.
+  plan               Plan      @default(FREE)
+  subscriptionStatus String?
+  planRenewsAt       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,8 +52,8 @@ enum Plan {
 }
 
 // ---------------------------------------------------------------------------
-// Pagamentos manuais (mercados sem gateway automático — ex: Moçambique,
-// M-Pesa/e-Mola) — ver manual-payment.service.ts. Nunca ativa o Premium
+// Pagamentos manuais — único mecanismo de faturação (Portugal, Brasil e
+// Moçambique; ver manual-payment.service.ts). Nunca ativa o Premium
 // sozinho: fica PENDING até alguém com a chave de administração confirmar
 // o comprovativo submetido, o mesmo princípio de "nenhuma aprovação
 // automática" já usado no repositório de templates clínicos.
@@ -62,6 +61,7 @@ enum Plan {
 
 enum ManualPaymentMethod {
   PAYPAL
+  BANK_TRANSFER
   MPESA
   EMOLA
 
@@ -81,7 +81,7 @@ model ManualPaymentRequest {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  market      String // "MZ" por agora — ver manual-payment.types.ts
+  market      String // "PT" | "BR" | "MZ" — ver manual-payment.types.ts
   method      ManualPaymentMethod
   cadence     String // "monthly" | "annual"
   amountLabel String // ex: "199 MT" — só para mostrar, valor não é verificado automaticamente
@@ -301,18 +301,6 @@ model TherapySession {
 // ---------------------------------------------------------------------------
 // Preferências de voz (secção 2) — fora do MVP passo 1, schema já preparado
 // ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Faturação — eventos de webhook do Stripe já processados, para garantir
-// idempotência (o Stripe pode reenviar o mesmo evento mais do que uma vez).
-// ---------------------------------------------------------------------------
-
-model ProcessedStripeEvent {
-  id          String   @id // o Stripe event id (evt_...)
-  processedAt DateTime @default(now())
-
-  @@map("processed_stripe_events")
-}
 
 model VoicePreference {
   userId String @id

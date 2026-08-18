@@ -1,5 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
 
+export type Market = "PT" | "BR" | "MZ";
+export type ManualPaymentMethod = "PAYPAL" | "BANK_TRANSFER" | "MPESA" | "EMOLA";
+
 export type ClinicalGoal =
   | "SLEEP"
   | "GENERALIZED_ANXIETY"
@@ -205,22 +208,26 @@ export const api = {
 
   getPrivacyPolicyMarkdown: () => requestText("/legal/privacy-policy"),
 
-  createCheckoutSession: (params: { market: "PT" | "BR"; cadence: "monthly" | "annual" }) =>
-    request<{ url: string }>("/billing/checkout-session", { method: "POST", body: JSON.stringify(params) }),
-
-  createBillingPortalSession: () =>
-    request<{ url: string }>("/billing/portal-session", { method: "POST" }),
-
   getPaymentContacts: () =>
     request<{
       paypalEmail: string;
       mpesaNumber: string;
       emolaNumber: string;
-      prices: { monthly: string; annual: string };
+      bank: {
+        bankName: string;
+        accountHolder: string;
+        accountNumber: string;
+        nib: string;
+        iban: string;
+        swift: string;
+      };
+      pricesByMarket: Record<Market, { monthly: string; annual: string }>;
+      methodsByMarket: Record<Market, ManualPaymentMethod[]>;
     }>("/billing/payment-contacts"),
 
   submitManualPaymentRequest: (params: {
-    method: "PAYPAL" | "MPESA" | "EMOLA";
+    market: Market;
+    method: ManualPaymentMethod;
     cadence: "monthly" | "annual";
     reference: string;
   }) =>

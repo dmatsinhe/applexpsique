@@ -52,36 +52,29 @@ services:
         value: https://lexpsique-demo-frontend.onrender.com
       - key: ANTHROPIC_API_KEY
         value: ""
-      - key: FRONTEND_URL
-        value: https://lexpsique-demo-frontend.onrender.com
-      # Faturação (Stripe) — `sync: false` faz o Render pedir estes valores
-      # uma única vez no dashboard, sem os escrever aqui nem no repositório
-      # (que é público). Sem eles preenchidos, a app funciona normalmente;
-      # só a subscrição fica indisponível (503) até serem configurados. Ver
-      # docs/interno/preco-e-nome.md e o guia de configuração da conta
-      # Stripe.
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: STRIPE_PRICE_PT_MONTHLY
-        sync: false
-      - key: STRIPE_PRICE_PT_ANNUAL
-        sync: false
-      - key: STRIPE_PRICE_BR_MONTHLY
-        sync: false
-      - key: STRIPE_PRICE_BR_ANNUAL
-        sync: false
-      # Pagamentos manuais (Moçambique — PayPal, M-Pesa, e-Mola). Não são
-      # segredos, só contactos de receção; explícitos aqui para serem
-      # fáceis de atualizar no dashboard se mudarem, sem precisar de
-      # redeploy. Ver docs/interno/configuracao-stripe.md.
+      # Pagamentos manuais — único mecanismo de faturação (Portugal, Brasil,
+      # Moçambique). Não são segredos, só os contactos/dados de receção
+      # mostrados a qualquer pessoa na página de Preços; explícitos aqui
+      # para serem fáceis de atualizar no dashboard se mudarem, sem
+      # precisar de redeploy. Ver docs/interno/configuracao-pagamentos.md.
       - key: PAYPAL_RECEIVE_EMAIL
         value: lexpsiqueism@gmail.com
       - key: MPESA_RECEIVE_NUMBER
         value: "845946215"
       - key: EMOLA_RECEIVE_NUMBER
         value: "871619151"
+      - key: BANK_NAME
+        value: Nedbank
+      - key: BANK_ACCOUNT_HOLDER
+        value: "Lexpsique, Lda."
+      - key: BANK_ACCOUNT_NUMBER
+        value: "00012648108"
+      - key: BANK_NIB
+        value: "0043 0000 0001 2648 1085 5"
+      - key: BANK_IBAN
+        value: MZ59004300000001264810855
+      - key: BANK_SWIFT
+        value: UNICMZMX
 
   - type: web
     name: lexpsique-demo-frontend

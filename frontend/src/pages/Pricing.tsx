@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, ApiError } from "../api/client.js";
+import { api, ApiError, type ManualPaymentMethod, type Market } from "../api/client.js";
 
 interface Props {
   onBack: () => void;
@@ -12,88 +12,92 @@ interface MarketPrice {
   annual: string;
 }
 
-interface SubscribeCardProps {
-  market: "PT" | "BR";
-  label: string;
-  monthlyPrice: string;
-  annualPrice: string;
-  isAuthenticated: boolean;
+interface BankDetails {
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  nib: string;
+  iban: string;
+  swift: string;
 }
 
-function SubscribeCard({ market, label, monthlyPrice, annualPrice, isAuthenticated }: SubscribeCardProps) {
-  const [loadingCadence, setLoadingCadence] = useState<"monthly" | "annual" | null>(null);
-  const [error, setError] = useState<string | null>(null);
+interface PaymentContacts {
+  paypalEmail: string;
+  mpesaNumber: string;
+  emolaNumber: string;
+  bank: BankDetails;
+  pricesByMarket: Record<Market, { monthly: string; annual: string }>;
+  methodsByMarket: Record<Market, ManualPaymentMethod[]>;
+}
 
-  async function handleSubscribe(cadence: "monthly" | "annual") {
-    setError(null);
-    if (!isAuthenticated) {
-      setError("Precisa de iniciar sessão antes de subscrever.");
-      return;
-    }
-    setLoadingCadence(cadence);
-    try {
-      const { url } = await api.createCheckoutSession({ market, cadence });
-      window.location.href = url;
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível iniciar o pagamento. Tente novamente mais tarde.",
-      );
-      setLoadingCadence(null);
-    }
+const MARKET_LABELS: Record<Market, string> = { PT: "Portugal", BR: "Brasil", MZ: "Moçambique" };
+
+const METHOD_LABELS: Record<ManualPaymentMethod, string> = {
+  PAYPAL: "PayPal",
+  BANK_TRANSFER: "Transferência bancária",
+  MPESA: "M-Pesa",
+  EMOLA: "e-Mola",
+};
+
+function PaymentDestination({ method, contacts }: { method: ManualPaymentMethod; contacts: PaymentContacts }) {
+  if (method === "PAYPAL") {
+    return (
+      <p className="explainer">
+        PayPal: <strong>{contacts.paypalEmail}</strong>
+      </p>
+    );
   }
-
+  if (method === "MPESA") {
+    return (
+      <p className="explainer">
+        M-Pesa: <strong>{contacts.mpesaNumber}</strong>
+      </p>
+    );
+  }
+  if (method === "EMOLA") {
+    return (
+      <p className="explainer">
+        e-Mola: <strong>{contacts.emolaNumber}</strong>
+      </p>
+    );
+  }
+  const b = contacts.bank;
   return (
-    <div className="subscribe-card">
-      <h3>{label}</h3>
-      {error && <p className="error" role="alert">{error}</p>}
-      <button type="button" onClick={() => handleSubscribe("monthly")} disabled={loadingCadence !== null}>
-        {loadingCadence === "monthly" ? "A abrir pagamento…" : `Subscrever — ${monthlyPrice}/mês`}
-      </button>
-      <button
-        type="button"
-        className="secondary"
-        onClick={() => handleSubscribe("annual")}
-        disabled={loadingCadence !== null}
-      >
-        {loadingCadence === "annual" ? "A abrir pagamento…" : `Subscrever anual — ${annualPrice}/ano`}
-      </button>
+    <div className="explainer">
+      <p>Transferência bancária para:</p>
+      <ul>
+        <li>Banco: {b.bankName}</li>
+        <li>Titular: {b.accountHolder}</li>
+        <li>Número de conta: {b.accountNumber}</li>
+        <li>NIB: {b.nib}</li>
+        <li>IBAN: {b.iban}</li>
+        <li>SWIFT/BIC: {b.swift}</li>
+      </ul>
     </div>
   );
 }
 
-type ManualMethod = "MPESA" | "EMOLA" | "PAYPAL";
-
-const MANUAL_METHOD_LABELS: Record<ManualMethod, string> = {
-  MPESA: "M-Pesa",
-  EMOLA: "e-Mola",
-  PAYPAL: "PayPal",
-};
+interface ManualPaymentSectionProps {
+  market: Market;
+  contacts: PaymentContacts;
+  isAuthenticated: boolean;
+}
 
 /**
- * Moçambique: PayPal, M-Pesa e e-Mola não têm um gateway automático como o
- * Stripe, por isso o fluxo é manual — a pessoa transfere e submete uma
- * referência aqui, e a fundadora confirma antes de ativar o Premium (ver
- * docs/interno/configuracao-stripe.md).
+ * Único mecanismo de pagamento da app (ver docs/interno/preco-e-nome.md e
+ * configuracao-pagamentos.md) — sem gateway automático em nenhum mercado.
+ * A pessoa transfere por fora da app e submete uma referência aqui; a
+ * fundadora confirma manualmente antes de ativar o Premium.
  */
-function ManualPaymentSection({ isAuthenticated }: { isAuthenticated: boolean }) {
-  const [contacts, setContacts] = useState<{
-    paypalEmail: string;
-    mpesaNumber: string;
-    emolaNumber: string;
-    prices: { monthly: string; annual: string };
-  } | null>(null);
-  const [method, setMethod] = useState<ManualMethod>("MPESA");
+function ManualPaymentSection({ market, contacts, isAuthenticated }: ManualPaymentSectionProps) {
+  const availableMethods = contacts.methodsByMarket[market];
+  const prices = contacts.pricesByMarket[market];
+  const [method, setMethod] = useState<ManualPaymentMethod>(availableMethods[0]);
   const [cadence, setCadence] = useState<"monthly" | "annual">("monthly");
   const [reference, setReference] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.getPaymentContacts().then(setContacts).catch(() => setContacts(null));
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -104,7 +108,7 @@ function ManualPaymentSection({ isAuthenticated }: { isAuthenticated: boolean })
     }
     setSubmitting(true);
     try {
-      await api.submitManualPaymentRequest({ method, cadence, reference });
+      await api.submitManualPaymentRequest({ market, method, cadence, reference });
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível enviar o pedido.");
@@ -113,19 +117,10 @@ function ManualPaymentSection({ isAuthenticated }: { isAuthenticated: boolean })
     }
   }
 
-  if (!contacts) {
-    return (
-      <div className="subscribe-card">
-        <h3>Moçambique</h3>
-        <p className="explainer">A carregar…</p>
-      </div>
-    );
-  }
-
   if (submitted) {
     return (
       <div className="subscribe-card">
-        <h3>Moçambique</h3>
+        <h3>{MARKET_LABELS[market]}</h3>
         <p className="explainer">
           Pedido enviado — vamos confirmar o pagamento e ativar o Premium em breve.
         </p>
@@ -133,36 +128,35 @@ function ManualPaymentSection({ isAuthenticated }: { isAuthenticated: boolean })
     );
   }
 
-  const destination =
-    method === "PAYPAL" ? contacts.paypalEmail : method === "MPESA" ? contacts.mpesaNumber : contacts.emolaNumber;
-
   return (
     <div className="subscribe-card">
-      <h3>Moçambique</h3>
+      <h3>{MARKET_LABELS[market]}</h3>
       <p className="explainer">
-        PayPal, M-Pesa ou e-Mola. Envie o valor e submeta a referência abaixo — confirmamos
-        manualmente e ativamos o Premium.
+        {availableMethods.map((m) => METHOD_LABELS[m]).join(", ")}. Envie o valor e submeta a
+        referência abaixo — confirmamos manualmente e ativamos o Premium.
       </p>
       <form onSubmit={handleSubmit}>
         <label>
           Método
-          <select value={method} onChange={(e) => setMethod(e.target.value as ManualMethod)}>
-            <option value="MPESA">M-Pesa</option>
-            <option value="EMOLA">e-Mola</option>
-            <option value="PAYPAL">PayPal</option>
+          <select value={method} onChange={(e) => setMethod(e.target.value as ManualPaymentMethod)}>
+            {availableMethods.map((m) => (
+              <option key={m} value={m}>
+                {METHOD_LABELS[m]}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           Plano
           <select value={cadence} onChange={(e) => setCadence(e.target.value as "monthly" | "annual")}>
-            <option value="monthly">Mensal — {contacts.prices.monthly}</option>
-            <option value="annual">Anual — {contacts.prices.annual}</option>
+            <option value="monthly">Mensal — {prices.monthly}</option>
+            <option value="annual">Anual — {prices.annual}</option>
           </select>
         </label>
         <p className="explainer">
-          Envie <strong>{contacts.prices[cadence]}</strong> para {MANUAL_METHOD_LABELS[method]}:{" "}
-          <strong>{destination}</strong>
+          Envie <strong>{prices[cadence]}</strong> via {METHOD_LABELS[method]}:
         </p>
+        <PaymentDestination method={method} contacts={contacts} />
         <label>
           Referência ou comprovativo
           <input
@@ -197,11 +191,22 @@ const MARKET_PRICES: MarketPrice[] = [
 
 /**
  * Página de preços — secção de negócio (ver docs/interno/preco-e-nome.md).
- * Pagamento real (Stripe) só está ligado para Portugal e Brasil, o
- * lançamento faseado escolhido pela fundadora; os restantes mercados
- * continuam só informativos, sem botão de compra, até serem ativados.
+ * Pagamento manual (sem gateway automático) para Portugal, Brasil e
+ * Moçambique, o lançamento faseado escolhido pela fundadora; os restantes
+ * mercados continuam só informativos, sem botão de compra, até serem
+ * ativados.
  */
 export function Pricing({ onBack, isAuthenticated }: Props) {
+  const [contacts, setContacts] = useState<PaymentContacts | null>(null);
+  const [contactsError, setContactsError] = useState(false);
+
+  useEffect(() => {
+    api
+      .getPaymentContacts()
+      .then(setContacts)
+      .catch(() => setContactsError(true));
+  }, []);
+
   return (
     <div className="screen">
       <button type="button" className="secondary" onClick={onBack}>
@@ -241,27 +246,24 @@ export function Pricing({ onBack, isAuthenticated }: Props) {
 
       <h2>Subscrever</h2>
       <p className="explainer">
-        Portugal e Brasil: cartão, PayPal ou Multibanco (Portugal), pela página de pagamento
-        segura do Stripe — a CuidaMente nunca vê nem guarda os dados do seu cartão. Moçambique:
-        PayPal, M-Pesa ou e-Mola, com confirmação manual.
+        Portugal e Brasil: PayPal ou transferência bancária. Moçambique: PayPal, transferência
+        bancária, M-Pesa ou e-Mola. Sem gateway automático — submete o comprovativo e confirmamos
+        manualmente.
       </p>
-      <div className="subscribe-grid">
-        <SubscribeCard
-          market="PT"
-          label="Portugal"
-          monthlyPrice="€5,99"
-          annualPrice="€49,99"
-          isAuthenticated={isAuthenticated}
-        />
-        <SubscribeCard
-          market="BR"
-          label="Brasil"
-          monthlyPrice="R$19,90"
-          annualPrice="R$159,90"
-          isAuthenticated={isAuthenticated}
-        />
-        <ManualPaymentSection isAuthenticated={isAuthenticated} />
-      </div>
+      {contactsError && (
+        <p className="error" role="alert">
+          Não foi possível carregar os dados de pagamento. Tente novamente mais tarde.
+        </p>
+      )}
+      {contacts ? (
+        <div className="subscribe-grid">
+          <ManualPaymentSection market="PT" contacts={contacts} isAuthenticated={isAuthenticated} />
+          <ManualPaymentSection market="BR" contacts={contacts} isAuthenticated={isAuthenticated} />
+          <ManualPaymentSection market="MZ" contacts={contacts} isAuthenticated={isAuthenticated} />
+        </div>
+      ) : (
+        !contactsError && <p className="explainer">A carregar…</p>
+      )}
 
       <h2>Preços por mercado</h2>
       <div className="markdown-content" style={{ overflowX: "auto" }}>

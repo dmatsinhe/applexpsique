@@ -21,24 +21,19 @@ export const env = {
     .filter(Boolean),
   isProduction: process.env.NODE_ENV === "production",
 
-  // Faturação (Stripe) — ver billing.service.ts. Todos opcionais: sem
-  // STRIPE_SECRET_KEY a app funciona normalmente, só a faturação fica
-  // indisponível (503), o que é o estado esperado antes de a fundadora
-  // configurar a conta Stripe.
-  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
-  stripePricePtMonthly: process.env.STRIPE_PRICE_PT_MONTHLY ?? "",
-  stripePricePtAnnual: process.env.STRIPE_PRICE_PT_ANNUAL ?? "",
-  stripePriceBrMonthly: process.env.STRIPE_PRICE_BR_MONTHLY ?? "",
-  stripePriceBrAnnual: process.env.STRIPE_PRICE_BR_ANNUAL ?? "",
-
-  // Pagamentos manuais (Moçambique — PayPal, M-Pesa, e-Mola). Sem gateway
-  // automático nestes métodos: ver manual-payment.service.ts. Valores por
-  // omissão são os fornecidos pela fundadora; sobrepor via env se mudarem.
+  // Pagamentos manuais — único mecanismo de faturação (Portugal, Brasil e
+  // Moçambique). Sem gateway automático: ver manual-payment.service.ts.
+  // Valores por omissão são os fornecidos pela fundadora; sobrepor via env
+  // se mudarem.
   paypalReceiveEmail: process.env.PAYPAL_RECEIVE_EMAIL ?? "lexpsiqueism@gmail.com",
   mpesaReceiveNumber: process.env.MPESA_RECEIVE_NUMBER ?? "845946215",
   emolaReceiveNumber: process.env.EMOLA_RECEIVE_NUMBER ?? "871619151",
+  bankName: process.env.BANK_NAME ?? "Nedbank",
+  bankAccountHolder: process.env.BANK_ACCOUNT_HOLDER ?? "Lexpsique, Lda.",
+  bankAccountNumber: process.env.BANK_ACCOUNT_NUMBER ?? "00012648108",
+  bankNib: process.env.BANK_NIB ?? "0043 0000 0001 2648 1085 5",
+  bankIban: process.env.BANK_IBAN ?? "MZ59004300000001264810855",
+  bankSwift: process.env.BANK_SWIFT ?? "UNICMZMX",
 };
 
 export function requireEncryptionKey(): string {

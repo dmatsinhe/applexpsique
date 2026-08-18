@@ -5,10 +5,10 @@ import { requireAdminKey } from "../middleware/requireAdminKey.js";
 import { asyncRoute } from "../middleware/errorHandler.js";
 
 /**
- * Confirmação manual dos pagamentos PayPal/M-Pesa/e-Mola (Moçambique) —
- * ver manual-payment.service.ts. Mesmo mecanismo de guarda que os
- * endpoints de aprovação de templates (chave partilhada, não é um
- * sistema de contas de staff real).
+ * Confirmação manual dos pagamentos (PayPal, transferência bancária,
+ * M-Pesa, e-Mola) — ver manual-payment.service.ts. Mesmo mecanismo de
+ * guarda que os endpoints de aprovação de templates (chave partilhada,
+ * não é um sistema de contas de staff real).
  */
 const router = Router();
 const manualPaymentService = new ManualPaymentService();

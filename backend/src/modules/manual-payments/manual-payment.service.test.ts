@@ -4,6 +4,7 @@ import {
   ManualPaymentAlreadyReviewedError,
   ManualPaymentRequestNotFoundError,
   ManualPaymentService,
+  UnavailablePaymentMethodError,
 } from "./manual-payment.service.js";
 
 const service = new ManualPaymentService();
@@ -29,6 +30,7 @@ describe("ManualPaymentService", () => {
     const user = await createTestUser(`manual-submit-${Date.now()}@lexpsique.pt`);
 
     const request = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "MPESA",
       cadence: "monthly",
       reference: "TX123456",
@@ -39,9 +41,53 @@ describe("ManualPaymentService", () => {
     expect(request.market).toBe("MZ");
   });
 
+  it("usa o preço certo para Portugal e Brasil", async () => {
+    const user = await createTestUser(`manual-precos-${Date.now()}@lexpsique.pt`);
+
+    const pt = await service.submitRequest(user.id, {
+      market: "PT",
+      method: "PAYPAL",
+      cadence: "monthly",
+      reference: "TX-pt",
+    });
+    expect(pt.amountLabel).toBe("€5,99");
+
+    const br = await service.submitRequest(user.id, {
+      market: "BR",
+      method: "BANK_TRANSFER",
+      cadence: "annual",
+      reference: "TX-br",
+    });
+    expect(br.amountLabel).toBe("R$159,90");
+  });
+
+  it("aceita transferência bancária como método em qualquer mercado", async () => {
+    const user = await createTestUser(`manual-banco-${Date.now()}@lexpsique.pt`);
+    const request = await service.submitRequest(user.id, {
+      market: "MZ",
+      method: "BANK_TRANSFER",
+      cadence: "monthly",
+      reference: "TX-banco",
+    });
+    expect(request.method).toBe("BANK_TRANSFER");
+  });
+
+  it("recusa M-Pesa e e-Mola fora de Moçambique", async () => {
+    const user = await createTestUser(`manual-metodo-invalido-${Date.now()}@lexpsique.pt`);
+
+    await expect(
+      service.submitRequest(user.id, { market: "PT", method: "MPESA", cadence: "monthly", reference: "TX-1" }),
+    ).rejects.toBeInstanceOf(UnavailablePaymentMethodError);
+
+    await expect(
+      service.submitRequest(user.id, { market: "BR", method: "EMOLA", cadence: "monthly", reference: "TX-2" }),
+    ).rejects.toBeInstanceOf(UnavailablePaymentMethodError);
+  });
+
   it("ativa o Premium ao aprovar, com renovação a 30 dias para o plano mensal", async () => {
     const user = await createTestUser(`manual-approve-monthly-${Date.now()}@lexpsique.pt`);
     const request = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "EMOLA",
       cadence: "monthly",
       reference: "TX-emola-1",
@@ -66,6 +112,7 @@ describe("ManualPaymentService", () => {
   it("usa renovação a 365 dias para o plano anual", async () => {
     const user = await createTestUser(`manual-approve-annual-${Date.now()}@lexpsique.pt`);
     const request = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "PAYPAL",
       cadence: "annual",
       reference: "TX-paypal-1",
@@ -82,6 +129,7 @@ describe("ManualPaymentService", () => {
   it("rejeita um pedido sem ativar o Premium", async () => {
     const user = await createTestUser(`manual-reject-${Date.now()}@lexpsique.pt`);
     const request = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "MPESA",
       cadence: "monthly",
       reference: "TX-invalido",
@@ -100,6 +148,7 @@ describe("ManualPaymentService", () => {
   it("recusa rever duas vezes o mesmo pedido", async () => {
     const user = await createTestUser(`manual-doublereview-${Date.now()}@lexpsique.pt`);
     const request = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "MPESA",
       cadence: "monthly",
       reference: "TX-duplo",
@@ -120,11 +169,13 @@ describe("ManualPaymentService", () => {
   it("lista só os pedidos PENDING, por ordem de criação", async () => {
     const user = await createTestUser(`manual-list-${Date.now()}@lexpsique.pt`);
     const first = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "MPESA",
       cadence: "monthly",
       reference: "TX-1",
     });
     const second = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "EMOLA",
       cadence: "monthly",
       reference: "TX-2",
@@ -174,8 +225,8 @@ describe("ManualPaymentService — expiração automática", () => {
     expect(updated.subscriptionStatus).toBe("manual_active");
   });
 
-  it("nunca toca num plano gerido pelo Stripe, mesmo com data de renovação no passado", async () => {
-    const user = await createTestUser(`manual-not-stripe-${Date.now()}@lexpsique.pt`);
+  it("nunca toca num plano com outro estado de subscrição, mesmo com data de renovação no passado", async () => {
+    const user = await createTestUser(`manual-outro-estado-${Date.now()}@lexpsique.pt`);
     await prisma.user.update({
       where: { id: user.id },
       data: { plan: "PREMIUM", subscriptionStatus: "active", planRenewsAt: daysFromNow(-1) },
@@ -263,6 +314,7 @@ describe("ManualPaymentService — expiração automática", () => {
     });
 
     const request = await service.submitRequest(user.id, {
+      market: "MZ",
       method: "MPESA",
       cadence: "monthly",
       reference: "TX-reativacao",

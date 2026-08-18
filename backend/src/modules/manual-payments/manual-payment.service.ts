@@ -1,9 +1,11 @@
 import { prisma } from "../../lib/prisma.js";
 import {
-  MZ_PRICES,
-  MZ_RENEWAL_REMINDER_DAYS,
+  MARKET_PRICES,
+  RENEWAL_REMINDER_DAYS,
+  paymentMethodsFor,
   type ManualCadence,
   type ManualPaymentMethod,
+  type Market,
 } from "./manual-payment.types.js";
 
 export interface PlanStatus {
@@ -16,6 +18,7 @@ export interface PlanStatus {
 
 export class ManualPaymentRequestNotFoundError extends Error {}
 export class ManualPaymentAlreadyReviewedError extends Error {}
+export class UnavailablePaymentMethodError extends Error {}
 
 /**
  * Nenhum método aqui ativa o Premium sozinho — cada pedido fica PENDING
@@ -26,15 +29,21 @@ export class ManualPaymentAlreadyReviewedError extends Error {}
 export class ManualPaymentService {
   async submitRequest(
     userId: string,
-    params: { method: ManualPaymentMethod; cadence: ManualCadence; reference: string },
+    params: { market: Market; method: ManualPaymentMethod; cadence: ManualCadence; reference: string },
   ) {
+    if (!paymentMethodsFor(params.market).includes(params.method)) {
+      throw new UnavailablePaymentMethodError(
+        `${params.method} não está disponível para o mercado ${params.market}.`,
+      );
+    }
+
     return prisma.manualPaymentRequest.create({
       data: {
         userId,
-        market: "MZ",
+        market: params.market,
         method: params.method,
         cadence: params.cadence,
-        amountLabel: MZ_PRICES[params.cadence],
+        amountLabel: MARKET_PRICES[params.market][params.cadence],
         reference: params.reference,
       },
     });
@@ -75,14 +84,12 @@ export class ManualPaymentService {
   }
 
   /**
-   * Sem Stripe a avisar nem a cobrar sozinho, ninguém garante que o plano
-   * manual é desativado no dia certo — por isso não há sweep periódico
-   * (nenhum cron configurado): esta verificação corre sempre que alguém
-   * olha para o estado do plano, seja o próprio utilizador
-   * (getPlanStatusForUser) ou a fundadora (listExpiringSoon), o que cobre
-   * os dois caminhos por onde isto é normalmente visto. Nunca toca em
-   * planos geridos pelo Stripe (subscriptionStatus só fica "manual_active"
-   * para pagamentos manuais).
+   * Sem nada a avisar nem a cobrar sozinho, ninguém garante que o plano é
+   * desativado no dia certo — por isso não há sweep periódico (nenhum cron
+   * configurado): esta verificação corre sempre que alguém olha para o
+   * estado do plano, seja o próprio utilizador (getPlanStatusForUser) ou a
+   * fundadora (listExpiringSoon), o que cobre os dois caminhos por onde
+   * isto é normalmente visto.
    */
   async expireOverdueManualPlans(): Promise<{ downgradedCount: number }> {
     const result = await prisma.user.updateMany({
@@ -92,7 +99,7 @@ export class ManualPaymentService {
     return { downgradedCount: result.count };
   }
 
-  async listExpiringSoon(withinDays: number = MZ_RENEWAL_REMINDER_DAYS) {
+  async listExpiringSoon(withinDays: number = RENEWAL_REMINDER_DAYS) {
     await this.expireOverdueManualPlans();
 
     const threshold = new Date();
@@ -124,7 +131,7 @@ export class ManualPaymentService {
       expiringWithinDays:
         user.subscriptionStatus === "manual_active" &&
         daysRemaining !== null &&
-        daysRemaining <= MZ_RENEWAL_REMINDER_DAYS,
+        daysRemaining <= RENEWAL_REMINDER_DAYS,
     };
   }
 

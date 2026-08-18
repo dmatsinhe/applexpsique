@@ -16,20 +16,28 @@ router.get(
   }),
 );
 
-router.use(requireAuth);
-
 const submitSchema = z.object({
-  method: z.enum(["PAYPAL", "MPESA", "EMOLA"]),
+  market: z.enum(["PT", "BR", "MZ"]),
+  method: z.enum(["PAYPAL", "BANK_TRANSFER", "MPESA", "EMOLA"]),
   cadence: z.enum(["monthly", "annual"]),
   reference: z.string().min(3),
 });
 
 router.post(
   "/manual-payment-requests",
+  requireAuth,
   asyncRoute(async (req, res) => {
     const body = submitSchema.parse(req.body);
     const request = await manualPaymentService.submitRequest(req.userId!, body);
     res.status(201).json({ id: request.id, status: request.status });
+  }),
+);
+
+router.get(
+  "/plan-status",
+  requireAuth,
+  asyncRoute(async (req, res) => {
+    res.json(await manualPaymentService.getPlanStatusForUser(req.userId!));
   }),
 );
 

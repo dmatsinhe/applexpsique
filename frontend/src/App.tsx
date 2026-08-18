@@ -46,11 +46,6 @@ type Step =
 
 type Overlay = "none" | "founder-profile" | "account" | "privacy-policy" | "pricing" | "progress-report";
 
-function readCheckoutStatusFromUrl(): "success" | "cancelado" | null {
-  const value = new URLSearchParams(window.location.search).get("checkout");
-  return value === "success" || value === "cancelado" ? value : null;
-}
-
 export function App() {
   const alreadyAuthenticated = hasStoredAuthToken();
   const [step, setStep] = useState<Step>(
@@ -58,9 +53,6 @@ export function App() {
   );
   const [isAuthenticated, setIsAuthenticated] = useState(alreadyAuthenticated);
   const [overlay, setOverlay] = useState<Overlay>("none");
-  const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelado" | null>(
-    readCheckoutStatusFromUrl,
-  );
   const [renewalWarningDays, setRenewalWarningDays] = useState<number | null>(null);
   const [dismissedRenewalWarning, setDismissedRenewalWarning] = useState(false);
 
@@ -73,13 +65,6 @@ export function App() {
       })
       .catch(() => {});
   }, [isAuthenticated]);
-
-  function dismissCheckoutStatus() {
-    setCheckoutStatus(null);
-    const url = new URL(window.location.href);
-    url.searchParams.delete("checkout");
-    window.history.replaceState({}, "", url.toString());
-  }
 
   function handleOutcome(outcome: CheckInOutcome) {
     switch (outcome.kind) {
@@ -158,22 +143,6 @@ export function App() {
 
   return (
     <main className="app">
-      {checkoutStatus === "success" && (
-        <p className="checkout-banner success">
-          Pagamento confirmado — bem-vinda ao CuidaMente Premium.{" "}
-          <button type="button" className="link-button" onClick={dismissCheckoutStatus}>
-            Fechar
-          </button>
-        </p>
-      )}
-      {checkoutStatus === "cancelado" && (
-        <p className="checkout-banner cancelled">
-          Pagamento cancelado — não foi cobrado nada.{" "}
-          <button type="button" className="link-button" onClick={dismissCheckoutStatus}>
-            Fechar
-          </button>
-        </p>
-      )}
       {renewalWarningDays !== null && !dismissedRenewalWarning && (
         <p className="checkout-banner cancelled">
           {renewalWarningDays <= 0
