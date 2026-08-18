@@ -16,6 +16,7 @@ import { FounderProfile } from "./pages/FounderProfile.js";
 import { Account } from "./pages/Account.js";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy.js";
 import { Pricing } from "./pages/Pricing.js";
+import { ProgressReport } from "./pages/ProgressReport.js";
 
 type Step =
   | { name: "age-gate" }
@@ -43,7 +44,7 @@ type Step =
       };
     };
 
-type Overlay = "none" | "founder-profile" | "account" | "privacy-policy" | "pricing";
+type Overlay = "none" | "founder-profile" | "account" | "privacy-policy" | "pricing" | "progress-report";
 
 function readCheckoutStatusFromUrl(): "success" | "cancelado" | null {
   const value = new URLSearchParams(window.location.search).get("checkout");
@@ -147,6 +148,14 @@ export function App() {
     );
   }
 
+  if (overlay === "progress-report") {
+    return (
+      <main className="app">
+        <ProgressReport onBack={() => setOverlay("none")} onGoToPricing={() => setOverlay("pricing")} />
+      </main>
+    );
+  }
+
   return (
     <main className="app">
       {checkoutStatus === "success" && (
@@ -185,6 +194,11 @@ export function App() {
         {isAuthenticated && (
           <button type="button" className="link-button" onClick={() => setOverlay("account")}>
             A minha conta
+          </button>
+        )}
+        {isAuthenticated && (
+          <button type="button" className="link-button" onClick={() => setOverlay("progress-report")}>
+            A minha evolução
           </button>
         )}
         <button type="button" className="link-button" onClick={() => setOverlay("founder-profile")}>

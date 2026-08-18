@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { AccountService } from "../modules/account/account.service.js";
+import { ReportService } from "../modules/reports/report.service.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { asyncRoute } from "../middleware/errorHandler.js";
 
@@ -10,8 +11,16 @@ import { asyncRoute } from "../middleware/errorHandler.js";
  */
 const router = Router();
 const accountService = new AccountService();
+const reportService = new ReportService();
 
 router.use(requireAuth);
+
+router.get(
+  "/progress-report",
+  asyncRoute(async (req, res) => {
+    res.json(await reportService.getProgressReport(req.userId!));
+  }),
+);
 
 router.get(
   "/export",

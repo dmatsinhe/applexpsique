@@ -238,6 +238,15 @@ export const api = {
       expiringWithinDays: boolean;
     }>("/billing/plan-status"),
 
+  getProgressReport: () =>
+    request<{
+      totalCheckIns: number;
+      totalSessionsCompleted: number;
+      favoriteGoal: ClinicalGoal | null;
+      averageEnergyLevel: number | null;
+      recentActivity: { date: string; goal: ClinicalGoal | null; energyLevel: number | null }[];
+    }>("/account/progress-report"),
+
   exportAccountData: () => request<Record<string, unknown>>("/account/export"),
 
   deleteAccountHistory: () => request<void>("/account/history", { method: "DELETE" }),
