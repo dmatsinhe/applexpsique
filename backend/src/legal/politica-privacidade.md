@@ -28,10 +28,10 @@ desta aplicação, em conformidade com:
 O responsável pelo tratamento é:
 
 - **Entidade:** LexPsique, Lda.
-- **NIPC/NIF:** [a preencher]
-- **Sede ou domicílio profissional:** [a preencher]
+- **NIPC/NIF:** 400758719
+- **Sede ou domicílio profissional:** Maputo
 - **E-mail de privacidade:** lexpsique@gmail.com
-- **Telefone:** [a preencher, opcional]
+- **Telefone:** +258 87 161 9151
 
 Não existe atualmente um Encarregado de Proteção de Dados nomeado. A
 aplicação não atinge, neste momento, os limiares do artigo 37.º do RGPD
